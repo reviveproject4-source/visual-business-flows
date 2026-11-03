@@ -77,7 +77,7 @@ flowchart TD
 
 ## 6. System interaction view
 
-This logical sequence shows system responsibilities. Adapt participants and messages to the selected architecture and provider contract.
+The sequence models subscription billing, invoice creation, payment-provider collection, webhook reconciliation, retry classification, dunning notices, and entitlement changes.
 
 ```mermaid
 sequenceDiagram
