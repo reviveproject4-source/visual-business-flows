@@ -205,6 +205,10 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - **AC-02:** Given stock is reserved, when another order requests unavailable quantity, then the second reservation is rejected or partially allocated according to policy.
 - **AC-03:** Given a courier callback is delivered twice, when processed, then only one state transition and audit event are applied.
 - **AC-04:** Given delivery fails, when the provider reports failure, then the order remains unresolved and a recovery action is available.
+- **AC-05:** Given an order is submitted from any supported channel, when it is accepted, then a unique order ID and channel reference are stored.
+- **AC-06:** Given an order is paid or fulfilled, when its status changes, then payment and fulfillment statuses remain independently queryable.
+- **AC-07:** Given an item is unavailable, when substitution is proposed, then fulfillment remains on hold until customer consent is recorded.
+- **AC-08:** Given an order is cancelled, when cancellation is completed, then reservations are released and payment is voided or reversed according to provider state.
 
 ## 13. Operational metrics
 
@@ -230,9 +234,16 @@ Assign a named metric owner, reporting window, and baseline before setting a tar
 
 ## 15. Traceability
 
-| Rule group | Acceptance criteria | Implementation evidence |
+| Business rule | Acceptance criterion | Verification focus |
 |---|---|---|
-| BR-001 to BR-008 | AC-01 to AC-04 | Unit/integration tests, audit events, and process-owner sign-off |
+| BR-001 | AC-05 | Requirement and test coverage for the rule |
+| BR-002 | AC-06 | Requirement and test coverage for the rule |
+| BR-003 | AC-02 | Requirement and test coverage for the rule |
+| BR-004 | AC-01 | Requirement and test coverage for the rule |
+| BR-005 | AC-07 | Requirement and test coverage for the rule |
+| BR-006 | AC-03 | Requirement and test coverage for the rule |
+| BR-007 | AC-04 | Requirement and test coverage for the rule |
+| BR-008 | AC-08 | Requirement and test coverage for the rule |
 
 ---
 
