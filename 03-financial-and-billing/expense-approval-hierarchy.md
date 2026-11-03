@@ -82,21 +82,34 @@ This logical sequence shows system responsibilities. Adapt participants and mess
 ```mermaid
 sequenceDiagram
     autonumber
-    actor User as Business actor
-    participant App as Business application
-    participant Core as Domain service
-    participant External as External system
-    participant Audit as Audit/event store
-    User->>App: Submit request or business event
-    App->>Core: Validate identity, scope, and business rules
-    Core->>Core: Evaluate state and authorization
-    Core->>Audit: Persist decision and correlation reference
-    Core->>External: Send authorized request when required
-    External-->>Core: Return result or asynchronous event
-    Core->>Core: Validate response and apply allowed transition
-    Core->>Audit: Record outcome and processing status
-    Core-->>App: Return current status and next action
-    App-->>User: Show outcome or actionable exception
+    actor Requester
+    participant Workflow as Expense Workflow
+    participant Budget as Budget Service
+    participant Approver
+    participant Finance
+    participant Bank as Payment Provider
+    participant Ledger
+    participant Audit
+    Requester->>Workflow: Submit request, category, amount, and evidence
+    Workflow->>Budget: Validate budget and cost center
+    Budget-->>Workflow: Availability and policy result
+    Workflow->>Workflow: Determine approval route and segregation of duties
+    alt Ineligible or over budget
+        Workflow-->>Requester: Return for revision or reject with reason
+    else Eligible
+        Workflow->>Approver: Request approval at configured authority level
+        Approver-->>Workflow: Approve, reject, or request changes
+        alt Approved
+            Workflow->>Finance: Validate invoice, tax, duplicate, and payee evidence
+            Finance->>Bank: Execute authorized payment instruction
+            Bank-->>Finance: Payment result and reference
+            Finance->>Ledger: Post payable settlement or reimbursement
+            Ledger-->>Finance: Posting reference
+            Workflow->>Audit: Store approvals, evidence, and payment references
+        else Rejected or returned
+            Workflow->>Audit: Record decision and reason
+        end
+    end
 ```
 
 ## 7. Business rules
@@ -133,18 +146,25 @@ The following is a lifecycle scaffold. Rename, add, or remove states to reflect 
 
 ```mermaid
 stateDiagram-v2
-    [*] --> REQUESTED
-    REQUESTED --> VALIDATING
-    VALIDATING --> IN_PROGRESS: Valid
-    VALIDATING --> REJECTED: Invalid
-    IN_PROGRESS --> AWAITING_REVIEW: Exception or approval required
-    AWAITING_REVIEW --> IN_PROGRESS: Approved / retry permitted
-    AWAITING_REVIEW --> REJECTED: Declined
-    IN_PROGRESS --> COMPLETED: Success conditions met
-    REQUESTED --> CANCELLED: Authorized cancellation
-    COMPLETED --> [*]
+    [*] --> DRAFT
+    DRAFT --> SUBMITTED
+    SUBMITTED --> VALIDATING
+    VALIDATING --> REVISION_REQUIRED: Missing data or budget issue
+    REVISION_REQUIRED --> SUBMITTED
+    VALIDATING --> APPROVAL_PENDING: Eligible
+    APPROVAL_PENDING --> APPROVED: Authorized approver accepts
+    APPROVAL_PENDING --> REJECTED: Approver declines
+    APPROVAL_PENDING --> REVISION_REQUIRED: Changes requested
+    APPROVED --> FINANCE_REVIEW
+    FINANCE_REVIEW --> PAYMENT_PENDING: Evidence valid
+    FINANCE_REVIEW --> FINANCE_HOLD: Duplicate or compliance issue
+    FINANCE_HOLD --> FINANCE_REVIEW: Issue resolved
+    PAYMENT_PENDING --> PAID: Provider confirms
+    PAYMENT_PENDING --> PAYMENT_EXCEPTION: Failure or unknown result
+    PAYMENT_EXCEPTION --> PAYMENT_PENDING: Reconciled retry
+    PAID --> RECONCILED
     REJECTED --> [*]
-    CANCELLED --> [*]
+    RECONCILED --> [*]
 ```
 
 ## 10. Exceptions and recovery
