@@ -83,21 +83,27 @@ This logical sequence shows system responsibilities. Adapt participants and mess
 ```mermaid
 sequenceDiagram
     autonumber
-    actor User as Business actor
-    participant App as Business application
-    participant Core as Domain service
-    participant External as External system
-    participant Audit as Audit/event store
-    User->>App: Submit request or business event
-    App->>Core: Validate identity, scope, and business rules
-    Core->>Core: Evaluate state and authorization
-    Core->>Audit: Persist decision and correlation reference
-    Core->>External: Send authorized request when required
-    External-->>Core: Return result or asynchronous event
-    Core->>Core: Validate response and apply allowed transition
-    Core->>Audit: Record outcome and processing status
-    Core-->>App: Return current status and next action
-    App-->>User: Show outcome or actionable exception
+    actor Receiver
+    participant Receiving
+    participant PO as Purchase Order Service
+    participant QA as Quality Inspection
+    participant Inventory
+    participant AP as Accounts Payable
+    participant Supplier
+    participant Audit
+    Supplier->>Receiving: Deliver shipment and delivery note
+    Receiver->>Receiving: Register shipment and locate PO
+    Receiving->>PO: Retrieve expected SKU, lot, and quantities
+    PO-->>Receiving: Authorized open PO lines
+    Receiver->>Receiving: Count and inspect received units
+    Receiving->>QA: Submit quality and expiry evidence
+    QA-->>Receiving: Accept, quarantine, or reject quantities
+    Receiving->>Inventory: Post accepted quantity to available stock
+    Receiving->>Inventory: Post quarantined quantity to blocked stock
+    Receiving->>PO: Update received and outstanding quantities
+    Receiving->>Supplier: Raise discrepancy/claim where required
+    Receiving->>AP: Send matched receipt evidence for invoice matching
+    Receiving->>Audit: Record custody, inspection, and posting references
 ```
 
 ## 7. Business rules
@@ -134,18 +140,23 @@ The following is a lifecycle scaffold. Rename, add, or remove states to reflect 
 
 ```mermaid
 stateDiagram-v2
-    [*] --> REQUESTED
-    REQUESTED --> VALIDATING
-    VALIDATING --> IN_PROGRESS: Valid
-    VALIDATING --> REJECTED: Invalid
-    IN_PROGRESS --> AWAITING_REVIEW: Exception or approval required
-    AWAITING_REVIEW --> IN_PROGRESS: Approved / retry permitted
-    AWAITING_REVIEW --> REJECTED: Declined
-    IN_PROGRESS --> COMPLETED: Success conditions met
-    REQUESTED --> CANCELLED: Authorized cancellation
-    COMPLETED --> [*]
-    REJECTED --> [*]
-    CANCELLED --> [*]
+    [*] --> EXPECTED
+    EXPECTED --> ARRIVED
+    ARRIVED --> IDENTIFIED
+    IDENTIFIED --> COUNTING
+    COUNTING --> INSPECTION
+    INSPECTION --> ACCEPTED: Conforming units
+    INSPECTION --> PARTIALLY_ACCEPTED: Mixed result
+    INSPECTION --> QUARANTINED: Quality/expiry concern
+    INSPECTION --> REJECTED: No units accepted
+    ACCEPTED --> POSTED
+    PARTIALLY_ACCEPTED --> POSTED
+    QUARANTINED --> CLAIM_PENDING
+    REJECTED --> CLAIM_PENDING
+    CLAIM_PENDING --> RESOLVED
+    POSTED --> RECONCILED: PO/invoice matched
+    RESOLVED --> RECONCILED: Discrepancy closed
+    RECONCILED --> [*]
 ```
 
 ## 10. Exceptions and recovery
