@@ -35,13 +35,14 @@ Customer inactivity is detected inconsistently, while campaigns may contact peop
 
 ## 4. Trigger, preconditions, and postconditions
 
-**Trigger:** A valid business event or authorized user action initiates the workflow.
+**Trigger:** A scheduled segmentation run identifies a customer whose last qualifying activity exceeds the configured inactivity window.
 
 **Preconditions**
-- Initiating actor or service is authenticated.
-- Required master data, policy versions, and reference records are available.
-- Requested object is in a state that permits the operation.
-- Required permissions and segregation-of-duty controls are configured.
+- Customer identity and last qualifying activity timestamp are available and time-zone rules are defined.
+- Dormancy windows and segment eligibility are approved campaign configuration, not hard-coded assumptions.
+- Contact consent, suppression lists, channel preferences, and unsubscribe status are current.
+- An approved message/campaign version and destination channel exist.
+- Frequency caps and duplicate-contact prevention rules are configured.
 
 **Postconditions**
 - Business object has an explicit final or pending status.
@@ -138,7 +139,7 @@ Use stable identifiers, explicit timestamps/time zones, currency and unit defini
 
 ## 9. State model
 
-The following is a lifecycle scaffold. Rename, add, or remove states to reflect the domain and define permitted transitions in the implementation specification.
+The state names and transitions below describe the proposed lifecycle for this workflow. Confirm guards, role permissions, timeout transitions, and terminal-state behavior with the process owner and implementation team before production use.
 
 ```mermaid
 stateDiagram-v2
