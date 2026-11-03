@@ -201,7 +201,12 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - Percentage of returned items correctly dispositioned
 - Repeat return patterns requiring policy review
 
-Define numerator, denominator, source system, measurement window, owner, and baseline before setting targets. Metrics are measurement proposals, not promised improvements.
+- **Return rate:** returned units ÷ sold units for the same cohort and period; source: sales and return lines.
+- **Refund cycle time:** refund-confirmed timestamp minus approved-refund timestamp; report median and P90.
+- **Inspection disposition mix:** units by restock, repair, quarantine, supplier claim, or write-off ÷ inspected units.
+- Review weekly; segment by SKU, reason code, channel, and location.
+
+Assign a named metric owner, reporting window, and baseline before setting a target. These are measurement definitions, not promised improvements.
 
 ## 14. Assumptions and open decisions
 
