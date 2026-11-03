@@ -116,7 +116,7 @@ sequenceDiagram
         POS->>Accounting: Submit reconciliation using idempotency key
         Accounting-->>POS: Return posting reference or pending status
     else One or more variances exist
-        POS-->>Cashier: Show variance case; preserve initial count
+        POS-->>Cashier: Show variance case and preserve initial count
         POS->>Audit: Record VARIANCE_OPENED
         Supervisor->>POS: Record witnessed recount and evidence
         POS->>POS: Recalculate without overwriting prior count
