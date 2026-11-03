@@ -26,3 +26,5 @@ jobs:
         run: npx --yes markdownlint-cli2 "**/*.md" "#node_modules"
       - name: Validate Mermaid syntax in Markdown
         uses: sgerrand/mermaid-validation-action@31f8eed257dbbbadad3332c83694866903e92b0e
+        with:
+          comment-on-pr: false
