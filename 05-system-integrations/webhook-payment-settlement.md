@@ -55,27 +55,24 @@ This flow describes the human and organizational process, independent of a speci
 
 ```mermaid
 flowchart TD
-    Start([Trigger]) --> S1
-    S1[Create payment intent with unique merchant reference and idempotency key]
-    S2[Present provider payment method to customer]
-    S3[Receive provider webhook at authenticated endpoint]
-    S4[Validate signature, timestamp, merchant account, and event schema]
-    S5[Persist event metadata and acknowledge according to provider contract]
-    S6[Deduplicate event and apply allowed payment state transition]
-    S7[Update order/payment projection transactionally]
-    S8[Reconcile missing or contradictory events with provider API]
-    S9[Resolve unmatched transactions through controlled manual review]
-    S10[Close payment and settlement reconciliation with provider reference]
-    S1 --> S2
-    S2 --> S3
-    S3 --> S4
-    S4 --> S5
-    S5 --> S6
-    S6 --> S7
-    S7 --> S8
-    S8 --> S9
-    S9 --> S10
-    S10 --> End([Outcome])
+    A([Payment intent created]) --> B[Provider processes customer payment]
+    B --> C[Webhook event received]
+    C --> D[Validate signature, timestamp, merchant account, and schema]
+    D --> E{Authentic and valid event?}
+    E -->|No| X[Reject or quarantine event and log metadata]
+    E -->|Yes| F[Persist event durably before acknowledgement]
+    F --> G{Event already processed?}
+    G -->|Yes| H[Acknowledge duplicate without reapplying]
+    G -->|No| I[Apply allowed payment state transition idempotently]
+    I --> J{State transition consistent?}
+    J -->|No| K[Queue reconciliation against provider API]
+    J -->|Yes| L[Update payment/order projection and ledger]
+    K --> M[Resolve unmatched or out-of-order event]
+    L --> N[Reconcile settlement reference]
+    M --> N
+    H --> N
+    X --> N
+    N --> O([Close event handling with audit reference])
 ```
 
 ## 6. System interaction view
