@@ -215,14 +215,14 @@ Assign a named metric owner, reporting window, and baseline before setting a tar
 
 | Business rule | Acceptance criterion | Verification focus |
 |---|---|---|
-| BR-001 | AC-01 | Requirement and test coverage for the rule |
-| BR-002 | AC-02 | Requirement and test coverage for the rule |
-| BR-003 | AC-02 | Requirement and test coverage for the rule |
-| BR-004 | AC-03 | Requirement and test coverage for the rule |
-| BR-005 | AC-05 | Requirement and test coverage for the rule |
-| BR-006 | AC-06 | Requirement and test coverage for the rule |
-| BR-007 | AC-04 | Requirement and test coverage for the rule |
-| BR-008 | AC-07 | Requirement and test coverage for the rule |
+| BR-001 | AC-01 | a unique ID and accountable owner are assigned |
+| BR-002 | AC-02 | the owner and escalation role are notified |
+| BR-003 | AC-02 | the owner and escalation role are notified |
+| BR-004 | AC-03 | issuance is blocked pending approval |
+| BR-005 | AC-05 | prior investigation history and timestamps remain linked to the ticket |
+| BR-006 | AC-06 | a resolution code and customer communication record are required |
+| BR-007 | AC-04 | the ticket reopens or a linked follow-up is created |
+| BR-008 | AC-07 | access is denied and the event is auditable |
 
 ---
 
