@@ -84,21 +84,30 @@ This logical sequence shows system responsibilities. Adapt participants and mess
 ```mermaid
 sequenceDiagram
     autonumber
-    actor User as Business actor
-    participant App as Business application
-    participant Core as Domain service
-    participant External as External system
-    participant Audit as Audit/event store
-    User->>App: Submit request or business event
-    App->>Core: Validate identity, scope, and business rules
-    Core->>Core: Evaluate state and authorization
-    Core->>Audit: Persist decision and correlation reference
-    Core->>External: Send authorized request when required
-    External-->>Core: Return result or asynchronous event
-    Core->>Core: Validate response and apply allowed transition
-    Core->>Audit: Record outcome and processing status
-    Core-->>App: Return current status and next action
-    App-->>User: Show outcome or actionable exception
+    participant Inventory
+    participant Analytics
+    actor Merchandiser
+    participant Finance
+    participant Approver
+    participant Operations
+    participant Audit
+    Inventory->>Analytics: Provide stock age, sales, and movement history
+    Analytics->>Analytics: Apply approved ageing and velocity definitions
+    Analytics->>Merchandiser: Present candidate SKUs/lots for review
+    Merchandiser->>Inventory: Request count and condition verification
+    Inventory-->>Merchandiser: Verified quantity, location, and condition
+    Merchandiser->>Finance: Submit transfer, markdown, return, or write-off options
+    Finance-->>Merchandiser: Margin and financial impact assessment
+    Merchandiser->>Approver: Request approval with selected action
+    Approver-->>Merchandiser: Approve, reject, or request revision
+    alt Approved
+        Merchandiser->>Operations: Execute approved price or stock movement
+        Operations->>Inventory: Post effective-dated adjustment or transfer
+        Inventory-->>Analytics: Publish realized movement and sell-through
+    else Rejected
+        Merchandiser->>Audit: Record rejection and retain stock for review
+    end
+    Audit->>Audit: Archive decision and realized outcome
 ```
 
 ## 7. Business rules
@@ -135,18 +144,21 @@ The following is a lifecycle scaffold. Rename, add, or remove states to reflect 
 
 ```mermaid
 stateDiagram-v2
-    [*] --> REQUESTED
-    REQUESTED --> VALIDATING
-    VALIDATING --> IN_PROGRESS: Valid
-    VALIDATING --> REJECTED: Invalid
-    IN_PROGRESS --> AWAITING_REVIEW: Exception or approval required
-    AWAITING_REVIEW --> IN_PROGRESS: Approved / retry permitted
-    AWAITING_REVIEW --> REJECTED: Declined
-    IN_PROGRESS --> COMPLETED: Success conditions met
-    REQUESTED --> CANCELLED: Authorized cancellation
-    COMPLETED --> [*]
+    [*] --> MONITORED
+    MONITORED --> CANDIDATE: Age/velocity threshold reached
+    CANDIDATE --> COUNT_REVIEW
+    COUNT_REVIEW --> NOT_CONFIRMED: Quantity or condition mismatch
+    COUNT_REVIEW --> OPTIONS_ANALYSIS: Candidate confirmed
+    OPTIONS_ANALYSIS --> APPROVAL_PENDING
+    APPROVAL_PENDING --> REJECTED: Action declined
+    APPROVAL_PENDING --> EXECUTION_PENDING: Action approved
+    EXECUTION_PENDING --> EXECUTED: Price or stock movement posted
+    EXECUTED --> OUTCOME_MONITORING
+    OUTCOME_MONITORING --> CLOSED: Target review completed
+    OUTCOME_MONITORING --> OPTIONS_ANALYSIS: Residual stock remains
+    NOT_CONFIRMED --> MONITORED
     REJECTED --> [*]
-    CANCELLED --> [*]
+    CLOSED --> [*]
 ```
 
 ## 10. Exceptions and recovery
