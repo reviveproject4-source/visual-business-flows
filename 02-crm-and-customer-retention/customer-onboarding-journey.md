@@ -79,7 +79,7 @@ flowchart TD
 
 ## 6. System interaction view
 
-This logical sequence shows system responsibilities. Adapt participants and messages to the selected architecture and provider contract.
+The sequence models enrollment intake, consent capture, identity matching, member-profile creation/linking, points ledger initialization, and activation.
 
 ```mermaid
 sequenceDiagram
