@@ -54,27 +54,26 @@ This flow describes the human and organizational process, independent of a speci
 
 ```mermaid
 flowchart TD
-    Start([Trigger]) --> S1
-    S1[Record sales, adjustments, reservations, and receipt movements]
-    S2[Calculate available-to-promise and inventory position per SKU/location]
-    S3[Compare inventory position with reorder point and lead-time demand]
-    S4[Check open purchase orders and transfers before proposing replenishment]
-    S5[Create purchase requisition with suggested quantity and supplier]
-    S6[Validate budget, minimum order quantity, pack size, and approval authority]
-    S7[Approve and issue purchase order]
-    S8[Track supplier acknowledgement and expected arrival]
-    S9[Receive goods and reconcile quantity and quality]
-    S10[Recalculate inventory position and close replenishment task]
-    S1 --> S2
-    S2 --> S3
-    S3 --> S4
-    S4 --> S5
-    S5 --> S6
-    S6 --> S7
-    S7 --> S8
-    S8 --> S9
-    S9 --> S10
-    S10 --> End([Outcome])
+    A([Stock movement or scheduled review]) --> B[Calculate inventory position and lead-time demand]
+    B --> C{Below replenishment threshold?}
+    C -->|No| Z[Record no-action evaluation]
+    C -->|Yes| D[Check open POs, transfers, reservations, and supplier constraints]
+    D --> E{Existing supply covers need?}
+    E -->|Yes| Z
+    E -->|No| F[Prepare purchase requisition and suggested quantity]
+    F --> G[Validate budget, MOQ, pack size, and supplier]
+    G --> H{Data and budget valid?}
+    H -->|No| I[Return for correction or hold]
+    H -->|Yes| J[Route to authorized approver]
+    J --> K{Approved?}
+    K -->|No| I
+    K -->|Yes| L[Issue PO with unique reference]
+    L --> M{Supplier acknowledges?}
+    M -->|No| N[Escalate supplier exception; do not duplicate PO]
+    M -->|Yes| O[Receive and inspect shipment]
+    O --> P[Post accepted units; quarantine discrepancies]
+    P --> Q[Reconcile PO and inventory position]
+    Q --> R([Close replenishment task])
 ```
 
 ## 6. System interaction view
