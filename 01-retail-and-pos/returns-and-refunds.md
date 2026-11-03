@@ -192,6 +192,7 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - **AC-02:** Given an item is classified defective, when disposition is confirmed, then it is moved to quarantine and excluded from saleable availability.
 - **AC-03:** Given a refund request times out, when retried, then provider status is checked and duplicate refund is prevented.
 - **AC-04:** Given a return exceeds refundable quantity, when submitted, then validation rejects the excess.
+- **AC-05:** Given a manual return override is requested, when the requester lacks the required role or evidence, then the override is blocked and audited.
 
 ## 13. Operational metrics
 
@@ -217,9 +218,15 @@ Assign a named metric owner, reporting window, and baseline before setting a tar
 
 ## 15. Traceability
 
-| Rule group | Acceptance criteria | Implementation evidence |
+| Business rule | Acceptance criterion | Verification focus |
 |---|---|---|
-| BR-001 to BR-007 | AC-01 to AC-04 | Unit/integration tests, audit events, and process-owner sign-off |
+| BR-001 | AC-01 | Requirement and test coverage for the rule |
+| BR-002 | AC-04 | Requirement and test coverage for the rule |
+| BR-003 | AC-02 | Requirement and test coverage for the rule |
+| BR-004 | AC-02 | Requirement and test coverage for the rule |
+| BR-005 | AC-04 | Requirement and test coverage for the rule |
+| BR-006 | AC-03 | Requirement and test coverage for the rule |
+| BR-007 | AC-05 | Requirement and test coverage for the rule |
 
 ---
 
