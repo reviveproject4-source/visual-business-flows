@@ -226,14 +226,14 @@ Assign a named metric owner, reporting window, and baseline before setting a tar
 
 | Business rule | Acceptance criterion | Verification focus |
 |---|---|---|
-| BR-001 | AC-05 | Requirement and test coverage for the rule |
-| BR-002 | AC-01 | Requirement and test coverage for the rule |
-| BR-003 | AC-02 | Requirement and test coverage for the rule |
-| BR-004 | AC-06 | Requirement and test coverage for the rule |
-| BR-005 | AC-07 | Requirement and test coverage for the rule |
-| BR-006 | AC-03 | Requirement and test coverage for the rule |
-| BR-007 | AC-08 | Requirement and test coverage for the rule |
-| BR-008 | AC-09 | Requirement and test coverage for the rule |
+| BR-001 | AC-05 | only provider-confirmed status can establish payment completion |
+| BR-002 | AC-01 | no payment state changes and the event is rejected |
+| BR-003 | AC-02 | only one business side effect occurs |
+| BR-004 | AC-06 | the transition is rejected and the event is reconciled |
+| BR-005 | AC-07 | no duplicate financial side effect occurs |
+| BR-006 | AC-03 | a second payment request is blocked pending reconciliation |
+| BR-007 | AC-08 | the confirmation is blocked |
+| BR-008 | AC-09 | each stage remains separately identifiable |
 
 ---
 
