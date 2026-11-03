@@ -230,14 +230,14 @@ Assign a named metric owner, reporting window, and baseline before setting a tar
 
 | Business rule | Acceptance criterion | Verification focus |
 |---|---|---|
-| BR-001 | AC-05 | Requirement and test coverage for the rule |
-| BR-002 | AC-01 | Requirement and test coverage for the rule |
-| BR-003 | AC-02 | Requirement and test coverage for the rule |
-| BR-004 | AC-03 | Requirement and test coverage for the rule |
-| BR-005 | AC-03 | Requirement and test coverage for the rule |
-| BR-006 | AC-04 | Requirement and test coverage for the rule |
-| BR-007 | AC-06 | Requirement and test coverage for the rule |
-| BR-008 | AC-07 | Requirement and test coverage for the rule |
+| BR-001 | AC-05 | PKCE is used and no client secret is exposed in browser/mobile code |
+| BR-002 | AC-01 | authentication is rejected and no session is issued |
+| BR-003 | AC-02 | account creation and session issuance are blocked |
+| BR-004 | AC-03 | automatic account linking is not performed |
+| BR-005 | AC-03 | automatic account linking is not performed |
+| BR-006 | AC-04 | authorization denies access despite successful authentication |
+| BR-007 | AC-06 | the request is rejected |
+| BR-008 | AC-07 | secure storage/cookie controls and session lifecycle rules are enforced |
 
 ---
 
