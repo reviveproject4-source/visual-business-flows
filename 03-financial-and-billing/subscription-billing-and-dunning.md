@@ -200,7 +200,12 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - Days sales outstanding for subscription invoices
 - Time from payment success to entitlement restoration
 
-Define numerator, denominator, source system, measurement window, owner, and baseline before setting targets. Metrics are measurement proposals, not promised improvements.
+- **Collection rate:** successfully collected amount ÷ amount due for the billing cohort.
+- **Dunning recovery rate:** failed invoices recovered within the configured dunning window ÷ invoices entering dunning.
+- **Involuntary churn rate:** subscriptions cancelled for non-payment ÷ subscriptions exposed to collection failure.
+- **Retry success rate:** successful retries ÷ total retry attempts. Review by plan, payment method, and failure code.
+
+Assign a named metric owner, reporting window, and baseline before setting a target. These are measurement definitions, not promised improvements.
 
 ## 14. Assumptions and open decisions
 
