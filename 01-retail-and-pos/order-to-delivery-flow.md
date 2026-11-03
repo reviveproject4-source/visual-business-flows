@@ -81,7 +81,7 @@ flowchart TD
 
 ## 6. System interaction view
 
-This logical sequence shows system responsibilities. Adapt participants and messages to the selected architecture and provider contract.
+The sequence models the order service coordinating inventory reservation, payment authorization, picking/packing, courier booking, delivery confirmation, and cancellation/recovery events.
 
 ```mermaid
 sequenceDiagram
