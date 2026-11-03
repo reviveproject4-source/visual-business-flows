@@ -236,14 +236,14 @@ Assign a named metric owner, reporting window, and baseline before setting a tar
 
 | Business rule | Acceptance criterion | Verification focus |
 |---|---|---|
-| BR-001 | AC-05 | Requirement and test coverage for the rule |
-| BR-002 | AC-06 | Requirement and test coverage for the rule |
-| BR-003 | AC-02 | Requirement and test coverage for the rule |
-| BR-004 | AC-01 | Requirement and test coverage for the rule |
-| BR-005 | AC-07 | Requirement and test coverage for the rule |
-| BR-006 | AC-03 | Requirement and test coverage for the rule |
-| BR-007 | AC-04 | Requirement and test coverage for the rule |
-| BR-008 | AC-08 | Requirement and test coverage for the rule |
+| BR-001 | AC-05 | a unique order ID and channel reference are stored |
+| BR-002 | AC-06 | payment and fulfillment statuses remain independently queryable |
+| BR-003 | AC-02 | the second reservation is rejected or partially allocated according to policy |
+| BR-004 | AC-01 | release is blocked unless an explicit payment policy permits it |
+| BR-005 | AC-07 | fulfillment remains on hold until customer consent is recorded |
+| BR-006 | AC-03 | only one state transition and audit event are applied |
+| BR-007 | AC-04 | the order remains unresolved and a recovery action is available |
+| BR-008 | AC-08 | reservations are released and payment is voided or reversed according to provider state |
 
 ---
 
