@@ -194,6 +194,11 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - **AC-02:** Given the same provider event is delivered twice, when processed, then only one business side effect occurs.
 - **AC-03:** Given a customer reports debit while provider state is unknown, when support opens a case, then a second payment request is blocked pending reconciliation.
 - **AC-04:** Given provider amount or currency differs from order, when event is processed, then payment is quarantined for review.
+- **AC-05:** Given a customer presents a redirect or screenshot, when payment is verified, then only provider-confirmed status can establish payment completion.
+- **AC-06:** Given a provider event attempts an invalid payment-state regression, when processed, then the transition is rejected and the event is reconciled.
+- **AC-07:** Given payment creation, capture, refund, or retry is submitted more than once, when the same idempotency key is used, then no duplicate financial side effect occurs.
+- **AC-08:** Given a privileged operator manually confirms a transaction, when approval is absent or evidence/reason is missing, then the confirmation is blocked.
+- **AC-09:** Given payment reaches authorization, capture, settlement, refund, or bank payout, when status is recorded, then each stage remains separately identifiable.
 
 ## 13. Operational metrics
 
@@ -219,9 +224,16 @@ Assign a named metric owner, reporting window, and baseline before setting a tar
 
 ## 15. Traceability
 
-| Rule group | Acceptance criteria | Implementation evidence |
+| Business rule | Acceptance criterion | Verification focus |
 |---|---|---|
-| BR-001 to BR-008 | AC-01 to AC-04 | Unit/integration tests, audit events, and process-owner sign-off |
+| BR-001 | AC-05 | Requirement and test coverage for the rule |
+| BR-002 | AC-01 | Requirement and test coverage for the rule |
+| BR-003 | AC-02 | Requirement and test coverage for the rule |
+| BR-004 | AC-06 | Requirement and test coverage for the rule |
+| BR-005 | AC-07 | Requirement and test coverage for the rule |
+| BR-006 | AC-03 | Requirement and test coverage for the rule |
+| BR-007 | AC-08 | Requirement and test coverage for the rule |
+| BR-008 | AC-09 | Requirement and test coverage for the rule |
 
 ---
 
