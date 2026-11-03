@@ -187,6 +187,10 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - **AC-02:** Given inspection rejects part of a delivery, when receipt is posted, then only accepted quantity becomes available.
 - **AC-03:** Given required lot or expiry data is missing, when put-away is attempted, then validation blocks release.
 - **AC-04:** Given WMS is offline, when an offline receipt is recorded, then it remains non-available until reconciliation completes.
+- **AC-05:** Given received quantity exceeds the configured supplier/SKU tolerance, when receipt is validated, then excess quantity is held for authorized disposition.
+- **AC-06:** Given a controlled product requires segregation of duties, when the receiver attempts to approve their own quality result, then approval is blocked or escalated.
+- **AC-07:** Given a posted receipt requires correction, when correction is approved, then a reversal/adjustment event with reason and approval is recorded.
+- **AC-08:** Given a supplier invoice is matched, when ordered, received, and invoiced quantities exceed configured tolerance, then the match is held for review.
 
 ## 13. Operational metrics
 
@@ -212,9 +216,16 @@ Assign a named metric owner, reporting window, and baseline before setting a tar
 
 ## 15. Traceability
 
-| Rule group | Acceptance criteria | Implementation evidence |
+| Business rule | Acceptance criterion | Verification focus |
 |---|---|---|
-| BR-001 to BR-008 | AC-01 to AC-04 | Unit/integration tests, audit events, and process-owner sign-off |
+| BR-001 | AC-01 | Requirement and test coverage for the rule |
+| BR-002 | AC-02 | Requirement and test coverage for the rule |
+| BR-003 | AC-02 | Requirement and test coverage for the rule |
+| BR-004 | AC-03 | Requirement and test coverage for the rule |
+| BR-005 | AC-05 | Requirement and test coverage for the rule |
+| BR-006 | AC-06 | Requirement and test coverage for the rule |
+| BR-007 | AC-07 | Requirement and test coverage for the rule |
+| BR-008 | AC-08 | Requirement and test coverage for the rule |
 
 ---
 
