@@ -54,25 +54,31 @@ This flow describes the human and organizational process, independent of a speci
 
 ```mermaid
 flowchart TD
-    Start([Trigger]) --> S1
-    S1[Define inactivity window and eligible customer segment]
-    S2[Refresh customer activity and consent status]
-    S3[Exclude suppressed, opted-out, invalid, or recently contacted records]
-    S4[Assign segment and approved campaign variant]
-    S5[Generate eligible offer and unique redemption token if applicable]
-    S6[Queue messages within channel frequency limits]
-    S7[Record delivery, bounce, opt-out, click, and redemption events]
-    S8[Stop journey when customer purchases or opts out]
-    S9[Measure reactivation against a baseline or holdout]
-    S1 --> S2
-    S2 --> S3
-    S3 --> S4
-    S4 --> S5
-    S5 --> S6
-    S6 --> S7
-    S7 --> S8
-    S8 --> S9
-    S9 --> End([Outcome])
+    A([Scheduled segment review]) --> B[Identify customers meeting inactivity definition]
+    B --> C[Refresh activity, consent, and suppression status]
+    C --> D{Eligible and contactable?}
+    D -->|No| X[Record exclusion reason]
+    D -->|Yes| E[Assign approved segment and campaign variant]
+    E --> F[Check contact frequency and channel limits]
+    F --> G{Within contact limits?}
+    G -->|No| X
+    G -->|Yes| H[Queue approved message]
+    H --> I{Delivery successful?}
+    I -->|No| J[Record failure and apply retry policy]
+    I -->|Yes| K[Track response, click, and redemption]
+    J --> L{Retry permitted?}
+    L -->|Yes| H
+    L -->|No| M[End journey with failure status]
+    K --> N{Purchase or opt-out received?}
+    N -->|Purchase| O[Stop journey and record reactivation]
+    N -->|Opt-out| P[Suppress future marketing contact]
+    N -->|Neither| Q[Continue within campaign window]
+    Q --> K
+    O --> R[Measure against baseline or holdout]
+    P --> R
+    X --> R
+    M --> R
+    R --> S([Close campaign evaluation])
 ```
 
 ## 6. System interaction view
