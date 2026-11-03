@@ -79,7 +79,7 @@ flowchart TD
 
 ## 6. System interaction view
 
-This logical sequence shows system responsibilities. Adapt participants and messages to the selected architecture and provider contract.
+The sequence models stock-position calculation, alert deduplication, replenishment proposal, buyer approval, purchase-order transmission, and receipt reconciliation.
 
 ```mermaid
 sequenceDiagram
