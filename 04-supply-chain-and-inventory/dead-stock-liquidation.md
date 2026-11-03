@@ -78,7 +78,7 @@ flowchart TD
 
 ## 6. System interaction view
 
-This logical sequence shows system responsibilities. Adapt participants and messages to the selected architecture and provider contract.
+The sequence models aging analysis, physical quantity validation, disposition recommendation, markdown/write-off approval, channel price synchronization, and recovery-value reporting.
 
 ```mermaid
 sequenceDiagram
