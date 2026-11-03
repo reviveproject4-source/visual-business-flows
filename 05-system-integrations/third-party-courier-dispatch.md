@@ -199,7 +199,12 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - Duplicate booking prevention count
 - Courier invoice versus quoted cost variance
 
-Define numerator, denominator, source system, measurement window, owner, and baseline before setting targets. Metrics are measurement proposals, not promised improvements.
+- **Booking success rate:** provider-confirmed bookings ÷ valid booking requests.
+- **On-time delivery rate:** delivered shipments meeting promised delivery window ÷ delivered shipments.
+- **Failed delivery rate:** shipments with a failed delivery attempt ÷ shipments dispatched.
+- **Courier cost variance:** actual billed cost minus accepted quote, by carrier/service. Review weekly by lane and carrier.
+
+Assign a named metric owner, reporting window, and baseline before setting a target. These are measurement definitions, not promised improvements.
 
 ## 14. Assumptions and open decisions
 
