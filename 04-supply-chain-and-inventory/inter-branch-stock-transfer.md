@@ -55,29 +55,26 @@ This flow describes the human and organizational process, independent of a speci
 
 ```mermaid
 flowchart TD
-    Start([Trigger]) --> S1
-    S1[Create transfer request with source, destination, and SKU quantities]
-    S2[Check source available stock and destination need]
-    S3[Approve transfer according to branch authority]
-    S4[Pick and independently verify quantities]
-    S5[Pack goods and record package/seal identifiers]
-    S6[Handover shipment to carrier with custody acceptance]
-    S7[Move dispatched quantity to in-transit inventory]
-    S8[Destination inspects package and records seal condition]
-    S9[Count received quantities and classify discrepancies]
-    S10[Move accepted quantities to destination stock and retain shortage investigation]
-    S11[Close transfer after quantity and inventory reconciliation]
-    S1 --> S2
-    S2 --> S3
-    S3 --> S4
-    S4 --> S5
-    S5 --> S6
-    S6 --> S7
-    S7 --> S8
-    S8 --> S9
-    S9 --> S10
-    S10 --> S11
-    S11 --> End([Outcome])
+    A([Transfer requested]) --> B[Specify source, destination, SKU, and quantity]
+    B --> C[Check source availability and destination need]
+    C --> D{Transfer feasible?}
+    D -->|No| X[Reject or revise request]
+    D -->|Yes| E[Obtain approval under branch authority]
+    E --> F{Approved?}
+    F -->|No| X
+    F -->|Yes| G[Pick and independently verify quantity]
+    G --> H[Pack, seal, and record custody identifiers]
+    H --> I[Handover shipment and move quantity to in-transit]
+    I --> J[Destination checks seal and performs receipt count]
+    J --> K{Received quantity matches?}
+    K -->|Yes| L[Post accepted quantity to destination stock]
+    K -->|No| M[Post accepted units and open variance investigation]
+    M --> N{Variance resolved?}
+    N -->|No| O[Keep transfer partially received]
+    N -->|Yes| P[Reconcile source, in-transit, and destination ledgers]
+    L --> P
+    O --> N
+    P --> Q([Close transfer])
 ```
 
 ## 6. System interaction view
