@@ -54,25 +54,25 @@ This flow describes the human and organizational process, independent of a speci
 
 ```mermaid
 flowchart TD
-    Start([Trigger]) --> S1
-    S1[Submit expense or purchase request before commitment where required]
-    S2[Validate requester, cost center, category, supplier, and evidence]
-    S3[Check budget availability and policy eligibility]
-    S4[Determine approval route using amount, category, and risk]
-    S5[Obtain approval from authorized independent approver]
-    S6[Finance reviews tax and duplicate evidence]
-    S7[Create payable or reimbursement instruction]
-    S8[Disburse through approved payment channel]
-    S9[Reconcile payment and archive evidence]
-    S1 --> S2
-    S2 --> S3
-    S3 --> S4
-    S4 --> S5
-    S5 --> S6
-    S6 --> S7
-    S7 --> S8
-    S8 --> S9
-    S9 --> End([Outcome])
+    A([Expense or purchase request]) --> B[Capture amount, category, cost center, payee, and evidence]
+    B --> C[Validate budget and policy eligibility]
+    C --> D{Eligible and within budget?}
+    D -->|No| X[Return for revision or reject with reason]
+    D -->|Yes| E[Determine approval route and authority]
+    E --> F[Obtain approval from independent authorized approver]
+    F --> G{Approved?}
+    G -->|No| X
+    G -->|Yes| H[Finance validates invoice, tax, duplicate, and payee]
+    H --> I{Finance checks pass?}
+    I -->|No| J[Place on hold and request correction]
+    J --> H
+    I -->|Yes| K[Execute payment through approved channel]
+    K --> L{Payment confirmed?}
+    L -->|No or unknown| M[Reconcile provider status before retry]
+    M --> K
+    L -->|Yes| N[Post settlement and archive approval evidence]
+    N --> O([Close request])
+    X --> O
 ```
 
 ## 6. System interaction view
