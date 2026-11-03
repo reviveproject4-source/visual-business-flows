@@ -195,6 +195,10 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - **AC-02:** Given amount exceeds the current approver limit, when routed, then it moves to a higher authorized approver.
 - **AC-03:** Given an approved request changes supplier or amount materially, when saved, then reapproval is required.
 - **AC-04:** Given a duplicate invoice is detected, when payment is scheduled, then it is blocked for finance review.
+- **AC-05:** Given related requests are submitted separately, when approval risk is evaluated, then related transactions are assessed for split-purchase avoidance.
+- **AC-06:** Given a request is submitted, when budget availability is checked, then the correct cost center and budget period are used.
+- **AC-07:** Given an expense category requires evidence, when a receipt, invoice, or business purpose is missing, then submission is blocked or routed to exception review.
+- **AC-08:** Given payment is released, when accounting posting occurs, then both actions reference the approved request and retain audit evidence.
 
 ## 13. Operational metrics
 
@@ -220,9 +224,16 @@ Assign a named metric owner, reporting window, and baseline before setting a tar
 
 ## 15. Traceability
 
-| Rule group | Acceptance criteria | Implementation evidence |
+| Business rule | Acceptance criterion | Verification focus |
 |---|---|---|
-| BR-001 to BR-008 | AC-01 to AC-04 | Unit/integration tests, audit events, and process-owner sign-off |
+| BR-001 | AC-02 | Requirement and test coverage for the rule |
+| BR-002 | AC-01 | Requirement and test coverage for the rule |
+| BR-003 | AC-05 | Requirement and test coverage for the rule |
+| BR-004 | AC-06 | Requirement and test coverage for the rule |
+| BR-005 | AC-07 | Requirement and test coverage for the rule |
+| BR-006 | AC-04 | Requirement and test coverage for the rule |
+| BR-007 | AC-03 | Requirement and test coverage for the rule |
+| BR-008 | AC-08 | Requirement and test coverage for the rule |
 
 ---
 
