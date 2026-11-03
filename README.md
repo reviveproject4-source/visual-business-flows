@@ -4,7 +4,7 @@
 
 The library translates operational problems into explicit actors, decisions, business rules, exception paths, and system responsibilities. Diagrams use Mermaid and are maintained as Markdown so they can be reviewed and versioned alongside product documentation.
 
-[Browse workflows](#workflow-catalog) · [Use a workflow](#how-to-use-this-library) · [Contribute](./CONTRIBUTING.md) · [Workflow template](./docs/workflow-template.md)
+[Browse workflows](#workflow-catalog) · [Use a workflow](#how-to-use-this-library) · [Contribute](./CONTRIBUTING.md) · [Workflow template](./docs/workflow-template.md) · [Developer readiness checklist](./docs/developer-implementation-readiness.md)
 
 ---
 
