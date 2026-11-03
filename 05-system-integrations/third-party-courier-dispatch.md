@@ -220,14 +220,14 @@ Assign a named metric owner, reporting window, and baseline before setting a tar
 
 | Business rule | Acceptance criterion | Verification focus |
 |---|---|---|
-| BR-001 | AC-01 | Requirement and test coverage for the rule |
-| BR-002 | AC-01 | Requirement and test coverage for the rule |
-| BR-003 | AC-02 | Requirement and test coverage for the rule |
-| BR-004 | AC-03 | Requirement and test coverage for the rule |
-| BR-005 | AC-04 | Requirement and test coverage for the rule |
-| BR-006 | AC-05 | Requirement and test coverage for the rule |
-| BR-007 | AC-06 | Requirement and test coverage for the rule |
-| BR-008 | AC-07 | Requirement and test coverage for the rule |
+| BR-001 | AC-01 | provider lookup occurs before a second booking is created |
+| BR-002 | AC-01 | provider lookup occurs before a second booking is created |
+| BR-003 | AC-02 | handover is blocked and an exception is recorded |
+| BR-004 | AC-03 | shipment is completed once and audit history is preserved |
+| BR-005 | AC-04 | shipment enters a recoverable exception state rather than DELIVERED |
+| BR-006 | AC-05 | only fields necessary for fulfillment are shared |
+| BR-007 | AC-06 | the configured rule and evidence are recorded |
+| BR-008 | AC-07 | customer acceptance is not assumed unless the approved policy permits it |
 
 ---
 
