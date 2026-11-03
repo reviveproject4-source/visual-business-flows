@@ -200,7 +200,12 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - Incremental revenue versus holdout or baseline
 - Campaign cost per incremental reactivated customer
 
-Define numerator, denominator, source system, measurement window, owner, and baseline before setting targets. Metrics are measurement proposals, not promised improvements.
+- **Reactivation rate:** eligible contacted dormant customers with a qualifying return activity ÷ eligible dormant customers contacted.
+- **Campaign conversion rate:** customers completing the defined conversion ÷ delivered campaign contacts.
+- **Opt-out rate:** new opt-outs attributed to campaign ÷ delivered campaign contacts.
+- Review per campaign and monthly; use a defined attribution window and suppression-aware denominator.
+
+Assign a named metric owner, reporting window, and baseline before setting a target. These are measurement definitions, not promised improvements.
 
 ## 14. Assumptions and open decisions
 
