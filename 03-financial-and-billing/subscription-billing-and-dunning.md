@@ -84,21 +84,33 @@ This logical sequence shows system responsibilities. Adapt participants and mess
 ```mermaid
 sequenceDiagram
     autonumber
-    actor User as Business actor
-    participant App as Business application
-    participant Core as Domain service
-    participant External as External system
-    participant Audit as Audit/event store
-    User->>App: Submit request or business event
-    App->>Core: Validate identity, scope, and business rules
-    Core->>Core: Evaluate state and authorization
-    Core->>Audit: Persist decision and correlation reference
-    Core->>External: Send authorized request when required
-    External-->>Core: Return result or asynchronous event
-    Core->>Core: Validate response and apply allowed transition
-    Core->>Audit: Record outcome and processing status
-    Core-->>App: Return current status and next action
-    App-->>User: Show outcome or actionable exception
+    participant Scheduler
+    participant Billing
+    participant Payment as Payment Provider
+    participant Entitlement
+    participant Notify
+    participant Reconcile as Reconciliation Service
+    participant Audit
+    Scheduler->>Billing: Start billing cycle
+    Billing->>Billing: Generate invoice from subscription and pricing version
+    Billing->>Payment: Collect with stable idempotency key
+    Payment-->>Billing: Success, failure, or pending result
+    alt Payment succeeded
+        Billing->>Billing: Mark invoice paid once
+        Billing->>Entitlement: Extend access for paid period
+        Billing->>Notify: Send receipt
+    else Payment failed
+        Billing->>Billing: Classify retryability and calculate next attempt
+        Billing->>Entitlement: Apply configured grace/access policy
+        Billing->>Notify: Send secure payment update notice
+        loop Bounded retry schedule
+            Billing->>Payment: Retry using idempotency and provider rules
+            Payment-->>Billing: Updated payment result
+        end
+    end
+    Payment-->>Reconcile: Late success, refund, or dispute event
+    Reconcile->>Billing: Reconcile provider and invoice state
+    Billing->>Audit: Record transitions, attempts, and references
 ```
 
 ## 7. Business rules
@@ -135,17 +147,22 @@ The following is a lifecycle scaffold. Rename, add, or remove states to reflect 
 
 ```mermaid
 stateDiagram-v2
-    [*] --> REQUESTED
-    REQUESTED --> VALIDATING
-    VALIDATING --> IN_PROGRESS: Valid
-    VALIDATING --> REJECTED: Invalid
-    IN_PROGRESS --> AWAITING_REVIEW: Exception or approval required
-    AWAITING_REVIEW --> IN_PROGRESS: Approved / retry permitted
-    AWAITING_REVIEW --> REJECTED: Declined
-    IN_PROGRESS --> COMPLETED: Success conditions met
-    REQUESTED --> CANCELLED: Authorized cancellation
-    COMPLETED --> [*]
-    REJECTED --> [*]
+    [*] --> ACTIVE
+    ACTIVE --> INVOICE_DUE: Billing date reached
+    INVOICE_DUE --> PAYMENT_PENDING
+    PAYMENT_PENDING --> PAID: Provider confirms
+    PAYMENT_PENDING --> PAST_DUE: Collection failed
+    PAST_DUE --> RETRY_SCHEDULED: Retryable failure
+    RETRY_SCHEDULED --> PAYMENT_PENDING: Retry time reached
+    PAST_DUE --> GRACE_PERIOD: Grace policy applies
+    GRACE_PERIOD --> PAID: Late payment confirmed
+    GRACE_PERIOD --> SUSPENDED: Grace expires
+    SUSPENDED --> ACTIVE: Balance settled and reactivated
+    PAST_DUE --> CANCELLED: Non-retryable or cancellation policy
+    PAID --> ACTIVE: Next paid period
+    PAID --> REFUND_REVIEW: Refund/dispute event
+    REFUND_REVIEW --> ACTIVE: No entitlement change
+    REFUND_REVIEW --> SUSPENDED: Reversal requires access hold
     CANCELLED --> [*]
 ```
 
