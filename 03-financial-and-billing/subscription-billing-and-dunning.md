@@ -221,14 +221,14 @@ Assign a named metric owner, reporting window, and baseline before setting a tar
 
 | Business rule | Acceptance criterion | Verification focus |
 |---|---|---|
-| BR-001 | AC-04 | Requirement and test coverage for the rule |
-| BR-002 | AC-01 | Requirement and test coverage for the rule |
-| BR-003 | AC-05 | Requirement and test coverage for the rule |
-| BR-004 | AC-02 | Requirement and test coverage for the rule |
-| BR-005 | AC-03 | Requirement and test coverage for the rule |
-| BR-006 | AC-03 | Requirement and test coverage for the rule |
-| BR-007 | AC-06 | Requirement and test coverage for the rule |
-| BR-008 | AC-07 | Requirement and test coverage for the rule |
+| BR-001 | AC-04 | it has no duplicate financial or entitlement effect |
+| BR-002 | AC-01 | provider status is checked before another charge is attempted |
+| BR-003 | AC-05 | the effective policy version is applied and recorded |
+| BR-004 | AC-02 | automatic retry stops and customer action is requested |
+| BR-005 | AC-03 | invoice and entitlement are reconciled without duplicate posting |
+| BR-006 | AC-03 | invoice and entitlement are reconciled without duplicate posting |
+| BR-007 | AC-06 | contract notice and data-retention rules determine the effective date and retained records |
+| BR-008 | AC-07 | it is rejected without exposing payment credentials |
 
 ---
 
