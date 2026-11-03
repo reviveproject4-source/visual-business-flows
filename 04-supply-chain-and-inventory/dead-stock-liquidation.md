@@ -217,14 +217,14 @@ Assign a named metric owner, reporting window, and baseline before setting a tar
 
 | Business rule | Acceptance criterion | Verification focus |
 |---|---|---|
-| BR-001 | AC-05 | Requirement and test coverage for the rule |
-| BR-002 | AC-01 | Requirement and test coverage for the rule |
-| BR-003 | AC-02 | Requirement and test coverage for the rule |
-| BR-004 | AC-04 | Requirement and test coverage for the rule |
-| BR-005 | AC-03 | Requirement and test coverage for the rule |
-| BR-006 | AC-01 | Requirement and test coverage for the rule |
-| BR-007 | AC-06 | Requirement and test coverage for the rule |
-| BR-008 | AC-07 | Requirement and test coverage for the rule |
+| BR-001 | AC-05 | the effective category-specific threshold and seasonality rule are recorded |
+| BR-002 | AC-01 | physical quantity validation and finance approval are required |
+| BR-003 | AC-02 | it routes to a higher approver or is rejected |
+| BR-004 | AC-04 | approved quantity is revalidated |
+| BR-005 | AC-03 | sale markdown is blocked |
+| BR-006 | AC-01 | physical quantity validation and finance approval are required |
+| BR-007 | AC-06 | a receiving party and movement reference are required |
+| BR-008 | AC-07 | recovery value and margin are compared with the approved baseline |
 
 ---
 
