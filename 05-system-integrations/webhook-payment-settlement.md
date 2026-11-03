@@ -55,27 +55,24 @@ This flow describes the human and organizational process, independent of a speci
 
 ```mermaid
 flowchart TD
-    Start([Trigger]) --> S1
-    S1[Create payment intent with unique merchant reference and idempotency key]
-    S2[Present provider payment method to customer]
-    S3[Receive provider webhook at authenticated endpoint]
-    S4[Validate signature, timestamp, merchant account, and event schema]
-    S5[Persist event metadata and acknowledge according to provider contract]
-    S6[Deduplicate event and apply allowed payment state transition]
-    S7[Update order/payment projection transactionally]
-    S8[Reconcile missing or contradictory events with provider API]
-    S9[Resolve unmatched transactions through controlled manual review]
-    S10[Close payment and settlement reconciliation with provider reference]
-    S1 --> S2
-    S2 --> S3
-    S3 --> S4
-    S4 --> S5
-    S5 --> S6
-    S6 --> S7
-    S7 --> S8
-    S8 --> S9
-    S9 --> S10
-    S10 --> End([Outcome])
+    A([Payment intent created]) --> B[Provider processes customer payment]
+    B --> C[Webhook event received]
+    C --> D[Validate signature, timestamp, merchant account, and schema]
+    D --> E{Authentic and valid event?}
+    E -->|No| X[Reject or quarantine event and log metadata]
+    E -->|Yes| F[Persist event durably before acknowledgement]
+    F --> G{Event already processed?}
+    G -->|Yes| H[Acknowledge duplicate without reapplying]
+    G -->|No| I[Apply allowed payment state transition idempotently]
+    I --> J{State transition consistent?}
+    J -->|No| K[Queue reconciliation against provider API]
+    J -->|Yes| L[Update payment/order projection and ledger]
+    K --> M[Resolve unmatched or out-of-order event]
+    L --> N[Reconcile settlement reference]
+    M --> N
+    H --> N
+    X --> N
+    N --> O([Close event handling with audit reference])
 ```
 
 ## 6. System interaction view
@@ -85,21 +82,33 @@ This logical sequence shows system responsibilities. Adapt participants and mess
 ```mermaid
 sequenceDiagram
     autonumber
-    actor User as Business actor
-    participant App as Business application
-    participant Core as Domain service
-    participant External as External system
-    participant Audit as Audit/event store
-    User->>App: Submit request or business event
-    App->>Core: Validate identity, scope, and business rules
-    Core->>Core: Evaluate state and authorization
-    Core->>Audit: Persist decision and correlation reference
-    Core->>External: Send authorized request when required
-    External-->>Core: Return result or asynchronous event
-    Core->>Core: Validate response and apply allowed transition
-    Core->>Audit: Record outcome and processing status
-    Core-->>App: Return current status and next action
-    App-->>User: Show outcome or actionable exception
+    actor Customer
+    participant App as Merchant Application
+    participant Payment as Payment Provider
+    participant Webhook as Webhook Endpoint
+    participant Queue as Durable Event Queue
+    participant Ledger
+    participant Reconcile
+    participant Audit
+    Customer->>App: Initiate payment
+    App->>Payment: Create payment intent with idempotency key
+    Payment-->>App: Return payment reference and next action
+    Payment->>Webhook: Send signed event
+    Webhook->>Webhook: Validate signature, timestamp, account, and schema
+    alt Invalid event
+        Webhook-->>Payment: Reject according to provider contract
+        Webhook->>Audit: Record rejected event metadata
+    else Valid event
+        Webhook->>Queue: Persist event durably before acknowledgement
+        Queue-->>Webhook: Durable receipt
+        Webhook-->>Payment: Acknowledge event
+        Queue->>Ledger: Deliver event for idempotent processing
+        Ledger->>Ledger: Enforce allowed payment transition and deduplication
+        Ledger->>Audit: Record event and ledger reference
+    end
+    Reconcile->>Payment: Query provider for missing or contradictory state
+    Payment-->>Reconcile: Return authoritative transaction status
+    Reconcile->>Ledger: Post controlled reconciliation adjustment if approved
 ```
 
 ## 7. Business rules
@@ -136,18 +145,24 @@ The following is a lifecycle scaffold. Rename, add, or remove states to reflect 
 
 ```mermaid
 stateDiagram-v2
-    [*] --> REQUESTED
-    REQUESTED --> VALIDATING
-    VALIDATING --> IN_PROGRESS: Valid
-    VALIDATING --> REJECTED: Invalid
-    IN_PROGRESS --> AWAITING_REVIEW: Exception or approval required
-    AWAITING_REVIEW --> IN_PROGRESS: Approved / retry permitted
-    AWAITING_REVIEW --> REJECTED: Declined
-    IN_PROGRESS --> COMPLETED: Success conditions met
-    REQUESTED --> CANCELLED: Authorized cancellation
-    COMPLETED --> [*]
-    REJECTED --> [*]
-    CANCELLED --> [*]
+    [*] --> INTENT_CREATED
+    INTENT_CREATED --> AWAITING_CUSTOMER
+    AWAITING_CUSTOMER --> PROVIDER_PENDING
+    PROVIDER_PENDING --> EVENT_RECEIVED
+    EVENT_RECEIVED --> SIGNATURE_VALIDATION
+    SIGNATURE_VALIDATION --> REJECTED_EVENT: Invalid signature or schema
+    SIGNATURE_VALIDATION --> DURABLY_QUEUED: Valid and persisted
+    DURABLY_QUEUED --> PROCESSING
+    PROCESSING --> SUCCEEDED: Valid success transition
+    PROCESSING --> FAILED: Valid failure transition
+    PROCESSING --> DUPLICATE_IGNORED: Event already applied
+    PROCESSING --> RECONCILIATION_REQUIRED: Unknown or out-of-order state
+    RECONCILIATION_REQUIRED --> SUCCEEDED: Provider confirms success
+    RECONCILIATION_REQUIRED --> FAILED: Provider confirms failure
+    REJECTED_EVENT --> [*]
+    DUPLICATE_IGNORED --> [*]
+    SUCCEEDED --> [*]
+    FAILED --> [*]
 ```
 
 ## 10. Exceptions and recovery

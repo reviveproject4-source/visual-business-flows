@@ -54,25 +54,31 @@ This flow describes the human and organizational process, independent of a speci
 
 ```mermaid
 flowchart TD
-    Start([Trigger]) --> S1
-    S1[Define inactivity window and eligible customer segment]
-    S2[Refresh customer activity and consent status]
-    S3[Exclude suppressed, opted-out, invalid, or recently contacted records]
-    S4[Assign segment and approved campaign variant]
-    S5[Generate eligible offer and unique redemption token if applicable]
-    S6[Queue messages within channel frequency limits]
-    S7[Record delivery, bounce, opt-out, click, and redemption events]
-    S8[Stop journey when customer purchases or opts out]
-    S9[Measure reactivation against a baseline or holdout]
-    S1 --> S2
-    S2 --> S3
-    S3 --> S4
-    S4 --> S5
-    S5 --> S6
-    S6 --> S7
-    S7 --> S8
-    S8 --> S9
-    S9 --> End([Outcome])
+    A([Scheduled segment review]) --> B[Identify customers meeting inactivity definition]
+    B --> C[Refresh activity, consent, and suppression status]
+    C --> D{Eligible and contactable?}
+    D -->|No| X[Record exclusion reason]
+    D -->|Yes| E[Assign approved segment and campaign variant]
+    E --> F[Check contact frequency and channel limits]
+    F --> G{Within contact limits?}
+    G -->|No| X
+    G -->|Yes| H[Queue approved message]
+    H --> I{Delivery successful?}
+    I -->|No| J[Record failure and apply retry policy]
+    I -->|Yes| K[Track response, click, and redemption]
+    J --> L{Retry permitted?}
+    L -->|Yes| H
+    L -->|No| M[End journey with failure status]
+    K --> N{Purchase or opt-out received?}
+    N -->|Purchase| O[Stop journey and record reactivation]
+    N -->|Opt-out| P[Suppress future marketing contact]
+    N -->|Neither| Q[Continue within campaign window]
+    Q --> K
+    O --> R[Measure against baseline or holdout]
+    P --> R
+    X --> R
+    M --> R
+    R --> S([Close campaign evaluation])
 ```
 
 ## 6. System interaction view
@@ -82,21 +88,25 @@ This logical sequence shows system responsibilities. Adapt participants and mess
 ```mermaid
 sequenceDiagram
     autonumber
-    actor User as Business actor
-    participant App as Business application
-    participant Core as Domain service
-    participant External as External system
-    participant Audit as Audit/event store
-    User->>App: Submit request or business event
-    App->>Core: Validate identity, scope, and business rules
-    Core->>Core: Evaluate state and authorization
-    Core->>Audit: Persist decision and correlation reference
-    Core->>External: Send authorized request when required
-    External-->>Core: Return result or asynchronous event
-    Core->>Core: Validate response and apply allowed transition
-    Core->>Audit: Record outcome and processing status
-    Core-->>App: Return current status and next action
-    App-->>User: Show outcome or actionable exception
+    participant CRM
+    participant Consent as Consent Store
+    participant Segment as Segmentation Service
+    participant Campaign
+    participant Channel as Messaging Provider
+    participant Commerce as Order Service
+    participant Analytics
+    CRM->>Segment: Provide customer activity snapshot
+    Segment->>Consent: Check consent, suppression, and contact limits
+    Consent-->>Segment: Eligible and excluded records
+    Segment->>Campaign: Send eligible segment and rule version
+    Campaign->>Campaign: Assign approved variant and frequency window
+    Campaign->>Channel: Queue personalized message
+    Channel-->>Campaign: Delivery, bounce, or failure event
+    Campaign->>CRM: Apply opt-out or suppression immediately
+    Commerce-->>Campaign: Publish qualifying purchase event
+    Campaign->>Campaign: Stop journey for purchase or opt-out
+    Campaign->>Analytics: Send exposure, response, and redemption events
+    Analytics->>Analytics: Compare outcome with holdout or baseline
 ```
 
 ## 7. Business rules
@@ -132,18 +142,25 @@ The following is a lifecycle scaffold. Rename, add, or remove states to reflect 
 
 ```mermaid
 stateDiagram-v2
-    [*] --> REQUESTED
-    REQUESTED --> VALIDATING
-    VALIDATING --> IN_PROGRESS: Valid
-    VALIDATING --> REJECTED: Invalid
-    IN_PROGRESS --> AWAITING_REVIEW: Exception or approval required
-    AWAITING_REVIEW --> IN_PROGRESS: Approved / retry permitted
-    AWAITING_REVIEW --> REJECTED: Declined
-    IN_PROGRESS --> COMPLETED: Success conditions met
-    REQUESTED --> CANCELLED: Authorized cancellation
-    COMPLETED --> [*]
-    REJECTED --> [*]
-    CANCELLED --> [*]
+    [*] --> CANDIDATE
+    CANDIDATE --> ELIGIBILITY_CHECK
+    ELIGIBILITY_CHECK --> SUPPRESSED: No consent, invalid, or contact cap reached
+    ELIGIBILITY_CHECK --> SEGMENTED: Eligible
+    SEGMENTED --> MESSAGE_QUEUED
+    MESSAGE_QUEUED --> SENT
+    MESSAGE_QUEUED --> DELIVERY_FAILED
+    SENT --> ENGAGED: Click or response
+    SENT --> REACTIVATED: Qualifying purchase
+    ENGAGED --> REACTIVATED: Qualifying purchase
+    SENT --> OPTED_OUT: Customer opts out
+    ENGAGED --> OPTED_OUT: Customer opts out
+    SENT --> EXPIRED: Journey window ends
+    ENGAGED --> EXPIRED: Journey window ends
+    REACTIVATED --> [*]
+    OPTED_OUT --> [*]
+    SUPPRESSED --> [*]
+    DELIVERY_FAILED --> [*]
+    EXPIRED --> [*]
 ```
 
 ## 10. Exceptions and recovery

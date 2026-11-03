@@ -54,27 +54,24 @@ This flow describes the human and organizational process, independent of a speci
 
 ```mermaid
 flowchart TD
-    Start([Trigger]) --> S1
-    S1[Generate invoice from active subscription and pricing version]
-    S2[Submit collection request with stable idempotency key]
-    S3[Process provider result and normalize payment state]
-    S4[On success, mark invoice paid and extend entitlement]
-    S5[On failure, classify retryable versus non-retryable reason]
-    S6[Apply configured grace and access policy]
-    S7[Notify subscriber with secure payment update route]
-    S8[Schedule bounded retry using provider-aware rules]
-    S9[Reconcile late success, dispute, refund, or cancellation]
-    S10[Close dunning journey when balance is settled or subscription terminates]
-    S1 --> S2
-    S2 --> S3
-    S3 --> S4
-    S4 --> S5
-    S5 --> S6
-    S6 --> S7
-    S7 --> S8
-    S8 --> S9
-    S9 --> S10
-    S10 --> End([Outcome])
+    A([Billing cycle starts]) --> B[Generate invoice from subscription and pricing version]
+    B --> C[Submit collection with idempotency key]
+    C --> D{Provider confirms payment?}
+    D -->|Yes| E[Mark invoice paid once]
+    E --> F[Extend entitlement and send receipt]
+    D -->|No| G[Classify failure as retryable or non-retryable]
+    G --> H{Retry permitted?}
+    H -->|No| I[Apply configured suspension/cancellation policy]
+    H -->|Yes| J[Apply grace policy and notify subscriber]
+    J --> K[Schedule bounded retry]
+    K --> L{Retry succeeds?}
+    L -->|Yes| E
+    L -->|No| M{Retry window remains?}
+    M -->|Yes| K
+    M -->|No| I
+    F --> N[Reconcile late events, refunds, and disputes]
+    I --> N
+    N --> O([Close dunning cycle with final status])
 ```
 
 ## 6. System interaction view
@@ -84,21 +81,33 @@ This logical sequence shows system responsibilities. Adapt participants and mess
 ```mermaid
 sequenceDiagram
     autonumber
-    actor User as Business actor
-    participant App as Business application
-    participant Core as Domain service
-    participant External as External system
-    participant Audit as Audit/event store
-    User->>App: Submit request or business event
-    App->>Core: Validate identity, scope, and business rules
-    Core->>Core: Evaluate state and authorization
-    Core->>Audit: Persist decision and correlation reference
-    Core->>External: Send authorized request when required
-    External-->>Core: Return result or asynchronous event
-    Core->>Core: Validate response and apply allowed transition
-    Core->>Audit: Record outcome and processing status
-    Core-->>App: Return current status and next action
-    App-->>User: Show outcome or actionable exception
+    participant Scheduler
+    participant Billing
+    participant Payment as Payment Provider
+    participant Entitlement
+    participant Notify
+    participant Reconcile as Reconciliation Service
+    participant Audit
+    Scheduler->>Billing: Start billing cycle
+    Billing->>Billing: Generate invoice from subscription and pricing version
+    Billing->>Payment: Collect with stable idempotency key
+    Payment-->>Billing: Success, failure, or pending result
+    alt Payment succeeded
+        Billing->>Billing: Mark invoice paid once
+        Billing->>Entitlement: Extend access for paid period
+        Billing->>Notify: Send receipt
+    else Payment failed
+        Billing->>Billing: Classify retryability and calculate next attempt
+        Billing->>Entitlement: Apply configured grace/access policy
+        Billing->>Notify: Send secure payment update notice
+        loop Bounded retry schedule
+            Billing->>Payment: Retry using idempotency and provider rules
+            Payment-->>Billing: Updated payment result
+        end
+    end
+    Payment-->>Reconcile: Late success, refund, or dispute event
+    Reconcile->>Billing: Reconcile provider and invoice state
+    Billing->>Audit: Record transitions, attempts, and references
 ```
 
 ## 7. Business rules
@@ -135,17 +144,22 @@ The following is a lifecycle scaffold. Rename, add, or remove states to reflect 
 
 ```mermaid
 stateDiagram-v2
-    [*] --> REQUESTED
-    REQUESTED --> VALIDATING
-    VALIDATING --> IN_PROGRESS: Valid
-    VALIDATING --> REJECTED: Invalid
-    IN_PROGRESS --> AWAITING_REVIEW: Exception or approval required
-    AWAITING_REVIEW --> IN_PROGRESS: Approved / retry permitted
-    AWAITING_REVIEW --> REJECTED: Declined
-    IN_PROGRESS --> COMPLETED: Success conditions met
-    REQUESTED --> CANCELLED: Authorized cancellation
-    COMPLETED --> [*]
-    REJECTED --> [*]
+    [*] --> ACTIVE
+    ACTIVE --> INVOICE_DUE: Billing date reached
+    INVOICE_DUE --> PAYMENT_PENDING
+    PAYMENT_PENDING --> PAID: Provider confirms
+    PAYMENT_PENDING --> PAST_DUE: Collection failed
+    PAST_DUE --> RETRY_SCHEDULED: Retryable failure
+    RETRY_SCHEDULED --> PAYMENT_PENDING: Retry time reached
+    PAST_DUE --> GRACE_PERIOD: Grace policy applies
+    GRACE_PERIOD --> PAID: Late payment confirmed
+    GRACE_PERIOD --> SUSPENDED: Grace expires
+    SUSPENDED --> ACTIVE: Balance settled and reactivated
+    PAST_DUE --> CANCELLED: Non-retryable or cancellation policy
+    PAID --> ACTIVE: Next paid period
+    PAID --> REFUND_REVIEW: Refund/dispute event
+    REFUND_REVIEW --> ACTIVE: No entitlement change
+    REFUND_REVIEW --> SUSPENDED: Reversal requires access hold
     CANCELLED --> [*]
 ```
 

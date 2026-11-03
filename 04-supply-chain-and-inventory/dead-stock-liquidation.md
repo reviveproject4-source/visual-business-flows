@@ -54,27 +54,25 @@ This flow describes the human and organizational process, independent of a speci
 
 ```mermaid
 flowchart TD
-    Start([Trigger]) --> S1
-    S1[Calculate stock age and sales velocity using agreed definitions]
-    S2[Flag SKUs or lots for review]
-    S3[Validate system quantity with cycle count where risk warrants]
-    S4[Assess expiry, condition, seasonality, demand, and replenishment status]
-    S5[Compare transfer, markdown, supplier return, bundle, donation, or write-off options]
-    S6[Model margin and financial impact]
-    S7[Obtain approval for selected action]
-    S8[Execute price or inventory movement with effective date and scope]
-    S9[Monitor sell-through and residual stock]
-    S10[Close review with realized outcome and audit evidence]
-    S1 --> S2
-    S2 --> S3
-    S3 --> S4
-    S4 --> S5
-    S5 --> S6
-    S6 --> S7
-    S7 --> S8
-    S8 --> S9
-    S9 --> S10
-    S10 --> End([Outcome])
+    A([Scheduled stock review]) --> B[Calculate stock age and sales velocity]
+    B --> C{SKU/lot meets review criteria?}
+    C -->|No| Z[Retain normal monitoring]
+    C -->|Yes| D[Verify physical quantity, condition, and expiry]
+    D --> E{Candidate confirmed?}
+    E -->|No| Z
+    E -->|Yes| F[Compare transfer, markdown, return, bundle, donation, or write-off]
+    F --> G[Model margin and financial impact]
+    G --> H[Obtain approval for selected action]
+    H --> I{Approved?}
+    I -->|No| J[Record rejection and retain stock]
+    I -->|Yes| K[Execute effective-dated price or inventory movement]
+    K --> L[Monitor sell-through and residual stock]
+    L --> M{Residual stock remains?}
+    M -->|Yes| F
+    M -->|No| N[Record realized outcome and close review]
+    J --> N
+    Z --> N
+    N --> O([Complete review])
 ```
 
 ## 6. System interaction view
@@ -84,21 +82,30 @@ This logical sequence shows system responsibilities. Adapt participants and mess
 ```mermaid
 sequenceDiagram
     autonumber
-    actor User as Business actor
-    participant App as Business application
-    participant Core as Domain service
-    participant External as External system
-    participant Audit as Audit/event store
-    User->>App: Submit request or business event
-    App->>Core: Validate identity, scope, and business rules
-    Core->>Core: Evaluate state and authorization
-    Core->>Audit: Persist decision and correlation reference
-    Core->>External: Send authorized request when required
-    External-->>Core: Return result or asynchronous event
-    Core->>Core: Validate response and apply allowed transition
-    Core->>Audit: Record outcome and processing status
-    Core-->>App: Return current status and next action
-    App-->>User: Show outcome or actionable exception
+    participant Inventory
+    participant Analytics
+    actor Merchandiser
+    participant Finance
+    participant Approver
+    participant Operations
+    participant Audit
+    Inventory->>Analytics: Provide stock age, sales, and movement history
+    Analytics->>Analytics: Apply approved ageing and velocity definitions
+    Analytics->>Merchandiser: Present candidate SKUs/lots for review
+    Merchandiser->>Inventory: Request count and condition verification
+    Inventory-->>Merchandiser: Verified quantity, location, and condition
+    Merchandiser->>Finance: Submit transfer, markdown, return, or write-off options
+    Finance-->>Merchandiser: Margin and financial impact assessment
+    Merchandiser->>Approver: Request approval with selected action
+    Approver-->>Merchandiser: Approve, reject, or request revision
+    alt Approved
+        Merchandiser->>Operations: Execute approved price or stock movement
+        Operations->>Inventory: Post effective-dated adjustment or transfer
+        Inventory-->>Analytics: Publish realized movement and sell-through
+    else Rejected
+        Merchandiser->>Audit: Record rejection and retain stock for review
+    end
+    Audit->>Audit: Archive decision and realized outcome
 ```
 
 ## 7. Business rules
@@ -135,18 +142,21 @@ The following is a lifecycle scaffold. Rename, add, or remove states to reflect 
 
 ```mermaid
 stateDiagram-v2
-    [*] --> REQUESTED
-    REQUESTED --> VALIDATING
-    VALIDATING --> IN_PROGRESS: Valid
-    VALIDATING --> REJECTED: Invalid
-    IN_PROGRESS --> AWAITING_REVIEW: Exception or approval required
-    AWAITING_REVIEW --> IN_PROGRESS: Approved / retry permitted
-    AWAITING_REVIEW --> REJECTED: Declined
-    IN_PROGRESS --> COMPLETED: Success conditions met
-    REQUESTED --> CANCELLED: Authorized cancellation
-    COMPLETED --> [*]
+    [*] --> MONITORED
+    MONITORED --> CANDIDATE: Age/velocity threshold reached
+    CANDIDATE --> COUNT_REVIEW
+    COUNT_REVIEW --> NOT_CONFIRMED: Quantity or condition mismatch
+    COUNT_REVIEW --> OPTIONS_ANALYSIS: Candidate confirmed
+    OPTIONS_ANALYSIS --> APPROVAL_PENDING
+    APPROVAL_PENDING --> REJECTED: Action declined
+    APPROVAL_PENDING --> EXECUTION_PENDING: Action approved
+    EXECUTION_PENDING --> EXECUTED: Price or stock movement posted
+    EXECUTED --> OUTCOME_MONITORING
+    OUTCOME_MONITORING --> CLOSED: Target review completed
+    OUTCOME_MONITORING --> OPTIONS_ANALYSIS: Residual stock remains
+    NOT_CONFIRMED --> MONITORED
     REJECTED --> [*]
-    CANCELLED --> [*]
+    CLOSED --> [*]
 ```
 
 ## 10. Exceptions and recovery

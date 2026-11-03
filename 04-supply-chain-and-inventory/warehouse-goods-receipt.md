@@ -55,25 +55,25 @@ This flow describes the human and organizational process, independent of a speci
 
 ```mermaid
 flowchart TD
-    Start([Trigger]) --> S1
-    S1[Identify delivery and locate authorized PO]
-    S2[Verify supplier, shipment, SKU, lot, and expected quantities]
-    S3[Unload into receiving or inspection area]
-    S4[Count physical units and record discrepancy by line]
-    S5[Inspect quality, damage, expiry, and required certificates]
-    S6[Accept, quarantine, reject, or partially accept quantities]
-    S7[Post accepted quantity to correct stock status and location]
-    S8[Create supplier claim or PO discrepancy case]
-    S9[Reconcile receipt against PO and invoice]
-    S1 --> S2
-    S2 --> S3
-    S3 --> S4
-    S4 --> S5
-    S5 --> S6
-    S6 --> S7
-    S7 --> S8
-    S8 --> S9
-    S9 --> End([Outcome])
+    A([Supplier shipment arrives]) --> B[Register delivery and locate authorized PO]
+    B --> C{Valid open PO and supplier?}
+    C -->|No| X[Hold shipment and escalate mismatch]
+    C -->|Yes| D[Count physical units by SKU/lot]
+    D --> E[Inspect quality, damage, expiry, and certificates]
+    E --> F{All units conform?}
+    F -->|Yes| G[Accept received quantity]
+    F -->|Mixed| H[Split accepted, quarantined, and rejected quantities]
+    F -->|No| I[Quarantine or reject shipment]
+    G --> J[Post accepted units to available stock]
+    H --> K[Post accepted units and quarantine remainder]
+    I --> L[Raise supplier claim and update PO discrepancy]
+    K --> L
+    J --> M[Match receipt to PO and invoice]
+    L --> M
+    M --> N{Quantity and invoice reconciled?}
+    N -->|No| O[Keep discrepancy open for resolution]
+    N -->|Yes| P([Close receipt with audit evidence])
+    O --> P
 ```
 
 ## 6. System interaction view
@@ -83,21 +83,27 @@ This logical sequence shows system responsibilities. Adapt participants and mess
 ```mermaid
 sequenceDiagram
     autonumber
-    actor User as Business actor
-    participant App as Business application
-    participant Core as Domain service
-    participant External as External system
-    participant Audit as Audit/event store
-    User->>App: Submit request or business event
-    App->>Core: Validate identity, scope, and business rules
-    Core->>Core: Evaluate state and authorization
-    Core->>Audit: Persist decision and correlation reference
-    Core->>External: Send authorized request when required
-    External-->>Core: Return result or asynchronous event
-    Core->>Core: Validate response and apply allowed transition
-    Core->>Audit: Record outcome and processing status
-    Core-->>App: Return current status and next action
-    App-->>User: Show outcome or actionable exception
+    actor Receiver
+    participant Receiving
+    participant PO as Purchase Order Service
+    participant QA as Quality Inspection
+    participant Inventory
+    participant AP as Accounts Payable
+    participant Supplier
+    participant Audit
+    Supplier->>Receiving: Deliver shipment and delivery note
+    Receiver->>Receiving: Register shipment and locate PO
+    Receiving->>PO: Retrieve expected SKU, lot, and quantities
+    PO-->>Receiving: Authorized open PO lines
+    Receiver->>Receiving: Count and inspect received units
+    Receiving->>QA: Submit quality and expiry evidence
+    QA-->>Receiving: Accept, quarantine, or reject quantities
+    Receiving->>Inventory: Post accepted quantity to available stock
+    Receiving->>Inventory: Post quarantined quantity to blocked stock
+    Receiving->>PO: Update received and outstanding quantities
+    Receiving->>Supplier: Raise discrepancy/claim where required
+    Receiving->>AP: Send matched receipt evidence for invoice matching
+    Receiving->>Audit: Record custody, inspection, and posting references
 ```
 
 ## 7. Business rules
@@ -134,18 +140,23 @@ The following is a lifecycle scaffold. Rename, add, or remove states to reflect 
 
 ```mermaid
 stateDiagram-v2
-    [*] --> REQUESTED
-    REQUESTED --> VALIDATING
-    VALIDATING --> IN_PROGRESS: Valid
-    VALIDATING --> REJECTED: Invalid
-    IN_PROGRESS --> AWAITING_REVIEW: Exception or approval required
-    AWAITING_REVIEW --> IN_PROGRESS: Approved / retry permitted
-    AWAITING_REVIEW --> REJECTED: Declined
-    IN_PROGRESS --> COMPLETED: Success conditions met
-    REQUESTED --> CANCELLED: Authorized cancellation
-    COMPLETED --> [*]
-    REJECTED --> [*]
-    CANCELLED --> [*]
+    [*] --> EXPECTED
+    EXPECTED --> ARRIVED
+    ARRIVED --> IDENTIFIED
+    IDENTIFIED --> COUNTING
+    COUNTING --> INSPECTION
+    INSPECTION --> ACCEPTED: Conforming units
+    INSPECTION --> PARTIALLY_ACCEPTED: Mixed result
+    INSPECTION --> QUARANTINED: Quality/expiry concern
+    INSPECTION --> REJECTED: No units accepted
+    ACCEPTED --> POSTED
+    PARTIALLY_ACCEPTED --> POSTED
+    QUARANTINED --> CLAIM_PENDING
+    REJECTED --> CLAIM_PENDING
+    CLAIM_PENDING --> RESOLVED
+    POSTED --> RECONCILED: PO/invoice matched
+    RESOLVED --> RECONCILED: Discrepancy closed
+    RECONCILED --> [*]
 ```
 
 ## 10. Exceptions and recovery

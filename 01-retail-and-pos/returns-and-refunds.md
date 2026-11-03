@@ -54,23 +54,26 @@ This flow describes the human and organizational process, independent of a speci
 
 ```mermaid
 flowchart TD
-    Start([Trigger]) --> S1
-    S1[Register return request and locate original sale]
-    S2[Validate purchase, return window, item, quantity, and prior return history]
-    S3[Inspect returned item and record condition evidence]
-    S4[Determine disposition: restock, quarantine, repair, supplier return, or write-off]
-    S5[Approve refund, exchange, or store credit under policy]
-    S6[Execute financial action using original payment reference where supported]
-    S7[Update inventory after physical receipt and disposition confirmation]
-    S8[Close return case and reconcile financial and stock records]
-    S1 --> S2
-    S2 --> S3
-    S3 --> S4
-    S4 --> S5
-    S5 --> S6
-    S6 --> S7
-    S7 --> S8
-    S8 --> End([Outcome])
+    A([Return requested]) --> B[Register original sale, item, quantity, and reason]
+    B --> C{Sale and return history verifiable?}
+    C -->|No| X[Hold or reject with reason]
+    C -->|Yes| D{Within return policy?}
+    D -->|No| X
+    D -->|Yes| E[Receive item and record inspection evidence]
+    E --> F{Condition and quantity accepted?}
+    F -->|No| G[Route to exception review]
+    F -->|Yes| H[Select disposition: restock, repair, quarantine, or supplier return]
+    G --> H
+    H --> I{Approval required?}
+    I -->|Yes| J[Obtain authorized approval]
+    I -->|No| K[Authorize refund, exchange, or credit]
+    J --> L{Approved?}
+    L -->|No| X
+    L -->|Yes| K
+    K --> M[Execute financial action and record provider result]
+    M --> N[Post inventory disposition for physically received units]
+    N --> O[Reconcile case, payment, and stock evidence]
+    O --> P([Close return case])
 ```
 
 ## 6. System interaction view
@@ -80,21 +83,34 @@ This logical sequence shows system responsibilities. Adapt participants and mess
 ```mermaid
 sequenceDiagram
     autonumber
-    actor User as Business actor
-    participant App as Business application
-    participant Core as Domain service
-    participant External as External system
-    participant Audit as Audit/event store
-    User->>App: Submit request or business event
-    App->>Core: Validate identity, scope, and business rules
-    Core->>Core: Evaluate state and authorization
-    Core->>Audit: Persist decision and correlation reference
-    Core->>External: Send authorized request when required
-    External-->>Core: Return result or asynchronous event
-    Core->>Core: Validate response and apply allowed transition
-    Core->>Audit: Record outcome and processing status
-    Core-->>App: Return current status and next action
-    App-->>User: Show outcome or actionable exception
+    actor Customer
+    actor Agent
+    participant Returns as Returns Service
+    participant Sales as Sales/POS
+    participant Stock as Inventory
+    participant Pay as Payment Provider
+    participant Audit
+    Customer->>Agent: Request return or exchange
+    Agent->>Returns: Register item, quantity, reason, and evidence
+    Returns->>Sales: Verify original sale and prior returns
+    Sales-->>Returns: Purchase and return eligibility
+    alt Ineligible or duplicate return
+        Returns-->>Agent: Reject with reason and audit reference
+    else Eligible
+        Agent->>Returns: Record inspection and condition
+        Returns->>Returns: Determine disposition and required approval
+        opt Approval required
+            Returns-->>Agent: Route for authorized decision
+            Agent->>Returns: Submit approval outcome
+        end
+        Returns->>Pay: Request refund when approved and supported
+        Pay-->>Returns: Refund result or pending reference
+        Returns->>Stock: Post physically received units to disposition status
+        Stock-->>Returns: Inventory posting reference
+        Returns->>Audit: Record decision, refund, stock, and evidence references
+        Returns-->>Agent: Return case status
+    end
+    Agent-->>Customer: Communicate outcome
 ```
 
 ## 7. Business rules
@@ -131,17 +147,21 @@ The following is a lifecycle scaffold. Rename, add, or remove states to reflect 
 ```mermaid
 stateDiagram-v2
     [*] --> REQUESTED
-    REQUESTED --> VALIDATING
-    VALIDATING --> IN_PROGRESS: Valid
-    VALIDATING --> REJECTED: Invalid
-    IN_PROGRESS --> AWAITING_REVIEW: Exception or approval required
-    AWAITING_REVIEW --> IN_PROGRESS: Approved / retry permitted
-    AWAITING_REVIEW --> REJECTED: Declined
-    IN_PROGRESS --> COMPLETED: Success conditions met
-    REQUESTED --> CANCELLED: Authorized cancellation
-    COMPLETED --> [*]
+    REQUESTED --> ELIGIBILITY_CHECK
+    ELIGIBILITY_CHECK --> REJECTED: Outside policy or duplicate
+    ELIGIBILITY_CHECK --> AWAITING_RECEIPT: Eligible
+    AWAITING_RECEIPT --> INSPECTION
+    INSPECTION --> APPROVAL_PENDING: Approval required
+    INSPECTION --> DISPOSITION_PENDING: Within authority
+    APPROVAL_PENDING --> DISPOSITION_PENDING: Approved
+    APPROVAL_PENDING --> REJECTED: Declined
+    DISPOSITION_PENDING --> REFUND_PENDING: Refund or credit approved
+    REFUND_PENDING --> REFUND_FAILED: Provider rejects
+    REFUND_FAILED --> REFUND_PENDING: Safe retry or manual resolution
+    REFUND_PENDING --> INVENTORY_PENDING: Financial result recorded
+    INVENTORY_PENDING --> COMPLETED: Stock disposition posted
     REJECTED --> [*]
-    CANCELLED --> [*]
+    COMPLETED --> [*]
 ```
 
 ## 10. Exceptions and recovery

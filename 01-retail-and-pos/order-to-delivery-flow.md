@@ -55,25 +55,27 @@ This flow describes the human and organizational process, independent of a speci
 
 ```mermaid
 flowchart TD
-    Start([Trigger]) --> S1
-    S1[Capture order and validate items, price, and delivery details]
-    S2[Authorize or confirm payment according to tender method]
-    S3[Reserve available stock against the order]
-    S4[Release paid and fulfillable order to picking]
-    S5[Pick items and record substitutions or shortages]
-    S6[Pack, label, and stage the order]
-    S7[Dispatch to customer or hand over to courier]
-    S8[Capture proof of handover or delivery]
-    S9[Close order and reconcile payment and fulfillment records]
-    S1 --> S2
-    S2 --> S3
-    S3 --> S4
-    S4 --> S5
-    S5 --> S6
-    S6 --> S7
-    S7 --> S8
-    S8 --> S9
-    S9 --> End([Outcome])
+    A([Customer submits order]) --> B[Validate items, price, address, and channel]
+    B --> C{Order data valid?}
+    C -->|No| X[Return validation errors]
+    C -->|Yes| D[Check stock and reserve available quantity]
+    D --> E{All items fulfillable?}
+    E -->|No| F[Offer approved substitution or partial fulfillment]
+    F --> G{Customer accepts?}
+    G -->|No| H[Cancel order and release reservation]
+    G -->|Yes| I[Confirm revised order]
+    E -->|Yes| J[Authorize payment]
+    I --> J
+    J --> K{Payment confirmed?}
+    K -->|No| L[Keep unpaid or cancel; release reservation]
+    K -->|Yes| M[Pick, verify, pack, and label]
+    M --> N{Picking discrepancy?}
+    N -->|Yes| O[Resolve shortage or obtain customer decision]
+    O --> M
+    N -->|No| P[Handover to customer or courier]
+    P --> Q[Capture handover/delivery evidence]
+    Q --> R[Reconcile order, payment, and fulfillment]
+    R --> S([Complete])
 ```
 
 ## 6. System interaction view
@@ -83,21 +85,38 @@ This logical sequence shows system responsibilities. Adapt participants and mess
 ```mermaid
 sequenceDiagram
     autonumber
-    actor User as Business actor
-    participant App as Business application
-    participant Core as Domain service
-    participant External as External system
-    participant Audit as Audit/event store
-    User->>App: Submit request or business event
-    App->>Core: Validate identity, scope, and business rules
-    Core->>Core: Evaluate state and authorization
-    Core->>Audit: Persist decision and correlation reference
-    Core->>External: Send authorized request when required
-    External-->>Core: Return result or asynchronous event
-    Core->>Core: Validate response and apply allowed transition
-    Core->>Audit: Record outcome and processing status
-    Core-->>App: Return current status and next action
-    App-->>User: Show outcome or actionable exception
+    actor Customer
+    participant Channel as Sales Channel
+    participant Order as Order Service
+    participant Stock as Inventory
+    participant Pay as Payment Provider
+    participant Fulfil as Fulfillment
+    participant Courier
+    participant Audit
+    Customer->>Channel: Place order
+    Channel->>Order: Submit order and delivery details
+    Order->>Stock: Check availability and reserve items
+    Stock-->>Order: Reservation result
+    alt Stock unavailable
+        Order-->>Channel: Reject or request approved substitution
+        Channel-->>Customer: Explain unavailable items
+    else Stock reserved
+        Order->>Pay: Authorize or confirm payment
+        Pay-->>Order: Payment result
+        alt Payment not confirmed
+            Order->>Stock: Release reservation
+            Order-->>Channel: Keep order unpaid or reject
+        else Payment confirmed
+            Order->>Fulfil: Release pick request
+            Fulfil->>Fulfil: Pick, verify, pack, and stage
+            Fulfil->>Courier: Request pickup when delivery applies
+            Courier-->>Fulfil: Booking and handover status
+            Fulfil->>Audit: Record handover or delivery evidence
+            Order->>Audit: Record order, payment, and fulfillment references
+            Order-->>Channel: Return fulfillment status
+        end
+    end
+    Channel-->>Customer: Show order status
 ```
 
 ## 7. Business rules
@@ -134,18 +153,28 @@ The following is a lifecycle scaffold. Rename, add, or remove states to reflect 
 
 ```mermaid
 stateDiagram-v2
-    [*] --> REQUESTED
-    REQUESTED --> VALIDATING
-    VALIDATING --> IN_PROGRESS: Valid
-    VALIDATING --> REJECTED: Invalid
-    IN_PROGRESS --> AWAITING_REVIEW: Exception or approval required
-    AWAITING_REVIEW --> IN_PROGRESS: Approved / retry permitted
-    AWAITING_REVIEW --> REJECTED: Declined
-    IN_PROGRESS --> COMPLETED: Success conditions met
-    REQUESTED --> CANCELLED: Authorized cancellation
-    COMPLETED --> [*]
-    REJECTED --> [*]
+    [*] --> DRAFT
+    DRAFT --> VALIDATING
+    VALIDATING --> STOCK_RESERVED: Items available
+    VALIDATING --> REJECTED: Invalid order
+    VALIDATING --> SUBSTITUTION_PENDING: Stock shortage
+    SUBSTITUTION_PENDING --> STOCK_RESERVED: Customer accepts substitution
+    SUBSTITUTION_PENDING --> CANCELLED: Customer declines
+    STOCK_RESERVED --> PAYMENT_PENDING
+    PAYMENT_PENDING --> PAID: Payment confirmed
+    PAYMENT_PENDING --> PAYMENT_FAILED: Payment rejected or expired
+    PAYMENT_FAILED --> CANCELLED: Reservation released
+    PAID --> PICKING
+    PICKING --> PACKED: Pick verified
+    PICKING --> EXCEPTION: Shortage or damage
+    EXCEPTION --> PICKING: Approved resolution
+    EXCEPTION --> CANCELLED: Cannot fulfill
+    PACKED --> DISPATCHED: Handover recorded
+    DISPATCHED --> DELIVERED: Delivery evidence accepted
+    DELIVERED --> COMPLETED
     CANCELLED --> [*]
+    REJECTED --> [*]
+    COMPLETED --> [*]
 ```
 
 ## 10. Exceptions and recovery

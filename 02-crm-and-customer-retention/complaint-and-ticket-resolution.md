@@ -54,25 +54,25 @@ This flow describes the human and organizational process, independent of a speci
 
 ```mermaid
 flowchart TD
-    Start([Trigger]) --> S1
-    S1[Capture complaint from supported channel and issue ticket reference]
-    S2[Identify customer, order, product, and contact preference]
-    S3[Classify category, severity, impact, and priority]
-    S4[Assign accountable owner and response target]
-    S5[Acknowledge receipt and investigate source records]
-    S6[Resolve within agent authority or escalate with evidence]
-    S7[Communicate proposed resolution and obtain response where required]
-    S8[Record outcome, compensation, and root cause]
-    S9[Close or reopen based on customer response and policy]
-    S1 --> S2
-    S2 --> S3
-    S3 --> S4
-    S4 --> S5
-    S5 --> S6
-    S6 --> S7
-    S7 --> S8
-    S8 --> S9
-    S9 --> End([Outcome])
+    A([Complaint received]) --> B[Create ticket and acknowledge receipt]
+    B --> C[Identify customer, order, product, and contact preference]
+    C --> D[Classify severity, impact, category, and response target]
+    D --> E[Assign accountable case owner]
+    E --> F[Investigate source records and gather evidence]
+    F --> G{Can frontline owner resolve within authority?}
+    G -->|Yes| H[Prepare policy-compliant resolution]
+    G -->|No| I[Escalate with evidence and requested decision]
+    I --> J{Supervisor decision?}
+    J -->|More evidence| F
+    J -->|Rejected| K[Communicate reason and available next step]
+    J -->|Approved| H
+    H --> L[Communicate proposed outcome]
+    L --> M{Customer accepts or closure policy met?}
+    M -->|No| N[Reopen or continue investigation]
+    N --> F
+    M -->|Yes| O[Record resolution, compensation, and root cause]
+    K --> O
+    O --> P([Close ticket with audit trail])
 ```
 
 ## 6. System interaction view
@@ -82,21 +82,29 @@ This logical sequence shows system responsibilities. Adapt participants and mess
 ```mermaid
 sequenceDiagram
     autonumber
-    actor User as Business actor
-    participant App as Business application
-    participant Core as Domain service
-    participant External as External system
-    participant Audit as Audit/event store
-    User->>App: Submit request or business event
-    App->>Core: Validate identity, scope, and business rules
-    Core->>Core: Evaluate state and authorization
-    Core->>Audit: Persist decision and correlation reference
-    Core->>External: Send authorized request when required
-    External-->>Core: Return result or asynchronous event
-    Core->>Core: Validate response and apply allowed transition
-    Core->>Audit: Record outcome and processing status
-    Core-->>App: Return current status and next action
-    App-->>User: Show outcome or actionable exception
+    actor Customer
+    actor Agent
+    participant Ticket as Ticket Service
+    participant CRM
+    participant Evidence as Order/Product Systems
+    participant Supervisor
+    participant Notify
+    Customer->>Agent: Submit complaint
+    Agent->>Ticket: Create ticket and capture contact preference
+    Ticket->>CRM: Resolve customer and interaction history
+    Ticket->>Evidence: Retrieve relevant order and product evidence
+    Ticket->>Ticket: Classify severity, impact, and response target
+    Ticket->>Agent: Assign owner and acknowledge receipt
+    Agent->>Ticket: Record investigation and proposed resolution
+    alt Within agent authority
+        Ticket->>Ticket: Validate resolution against policy
+    else Escalation required
+        Ticket->>Supervisor: Send case, evidence, and requested decision
+        Supervisor-->>Ticket: Approve, reject, or request more evidence
+    end
+    Ticket->>Notify: Send outcome and next steps
+    Customer-->>Ticket: Accept, dispute, or provide more information
+    Ticket->>Ticket: Close or reopen with reason and audit trail
 ```
 
 ## 7. Business rules
@@ -133,18 +141,20 @@ The following is a lifecycle scaffold. Rename, add, or remove states to reflect 
 
 ```mermaid
 stateDiagram-v2
-    [*] --> REQUESTED
-    REQUESTED --> VALIDATING
-    VALIDATING --> IN_PROGRESS: Valid
-    VALIDATING --> REJECTED: Invalid
-    IN_PROGRESS --> AWAITING_REVIEW: Exception or approval required
-    AWAITING_REVIEW --> IN_PROGRESS: Approved / retry permitted
-    AWAITING_REVIEW --> REJECTED: Declined
-    IN_PROGRESS --> COMPLETED: Success conditions met
-    REQUESTED --> CANCELLED: Authorized cancellation
-    COMPLETED --> [*]
-    REJECTED --> [*]
-    CANCELLED --> [*]
+    [*] --> NEW
+    NEW --> TRIAGED
+    TRIAGED --> ASSIGNED
+    ASSIGNED --> INVESTIGATING
+    INVESTIGATING --> AWAITING_CUSTOMER
+    AWAITING_CUSTOMER --> INVESTIGATING: Customer responds
+    INVESTIGATING --> ESCALATED: Authority or severity threshold reached
+    ESCALATED --> INVESTIGATING: Decision returned
+    INVESTIGATING --> RESOLUTION_PROPOSED
+    RESOLUTION_PROPOSED --> CLOSED: Accepted or closure policy met
+    RESOLUTION_PROPOSED --> REOPENED: Disputed or unresolved
+    REOPENED --> INVESTIGATING
+    CLOSED --> REOPENED: Valid reopening request
+    CLOSED --> [*]
 ```
 
 ## 10. Exceptions and recovery

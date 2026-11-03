@@ -54,27 +54,26 @@ This flow describes the human and organizational process, independent of a speci
 
 ```mermaid
 flowchart TD
-    Start([Trigger]) --> S1
-    S1[Capture order lines and map each line to a vendor]
-    S2[Calculate gross amount, taxes, shipping, discounts, and fee basis]
-    S3[Collect payment and record provider settlement reference]
-    S4[Create vendor payable and platform fee ledger entries]
-    S5[Track fulfillment and return/dispute eligibility per line]
-    S6[Apply hold/release conditions from provider contract and marketplace policy]
-    S7[Calculate net vendor payable after approved adjustments]
-    S8[Submit payout and reconcile provider transfer result]
-    S9[Handle refunds, chargebacks, reserves, and negative balances]
-    S10[Close settlement period with ledger-to-provider reconciliation]
-    S1 --> S2
-    S2 --> S3
-    S3 --> S4
-    S4 --> S5
-    S5 --> S6
-    S6 --> S7
-    S7 --> S8
-    S8 --> S9
-    S9 --> S10
-    S10 --> End([Outcome])
+    A([Multi-vendor order accepted]) --> B[Map order lines to vendors and calculate fee basis]
+    B --> C[Collect buyer payment]
+    C --> D{Provider confirms collection?}
+    D -->|No| X[Keep unpaid; do not create payable]
+    D -->|Yes| E[Record gross collection and vendor ledger allocations]
+    E --> F[Track fulfillment, returns, and disputes per order line]
+    F --> G{Release conditions satisfied?}
+    G -->|No| H[Hold affected vendor payable and record reason]
+    H --> I{Hold or dispute resolved?}
+    I -->|No| J[Carry forward to next review]
+    J --> I
+    I -->|Yes| G
+    G -->|Yes| K[Calculate net payable after approved adjustments]
+    K --> L[Submit provider-supported payout]
+    L --> M{Transfer confirmed?}
+    M -->|No or unknown| N[Reconcile provider status before retry]
+    N --> L
+    M -->|Yes| O[Reconcile vendor balance and settlement ledger]
+    O --> P([Close settlement period])
+    X --> P
 ```
 
 ## 6. System interaction view
@@ -84,21 +83,31 @@ This logical sequence shows system responsibilities. Adapt participants and mess
 ```mermaid
 sequenceDiagram
     autonumber
-    actor User as Business actor
-    participant App as Business application
-    participant Core as Domain service
-    participant External as External system
-    participant Audit as Audit/event store
-    User->>App: Submit request or business event
-    App->>Core: Validate identity, scope, and business rules
-    Core->>Core: Evaluate state and authorization
-    Core->>Audit: Persist decision and correlation reference
-    Core->>External: Send authorized request when required
-    External-->>Core: Return result or asynchronous event
-    Core->>Core: Validate response and apply allowed transition
-    Core->>Audit: Record outcome and processing status
-    Core-->>App: Return current status and next action
-    App-->>User: Show outcome or actionable exception
+    actor Buyer
+    participant Order
+    participant Payment as Payment Provider
+    participant Ledger as Marketplace Ledger
+    participant Fulfillment
+    participant Risk as Risk/Dispute Service
+    participant Payout
+    participant Audit
+    Buyer->>Order: Place multi-vendor order
+    Order->>Ledger: Allocate order lines to vendor sub-ledgers
+    Order->>Payment: Collect buyer payment
+    Payment-->>Order: Payment and settlement references
+    Order->>Ledger: Record gross collection and fee basis
+    Fulfillment-->>Risk: Publish line-level delivery/return status
+    Risk->>Ledger: Evaluate hold/release eligibility per contract and policy
+    alt Dispute, return, or hold condition exists
+        Risk->>Ledger: Retain affected payable and record reason
+    else Release conditions satisfied
+        Risk->>Payout: Submit approved vendor payable
+        Payout->>Payment: Request provider-supported transfer
+        Payment-->>Payout: Transfer result/reference
+        Payout->>Ledger: Reconcile transfer and vendor balance
+    end
+    Risk->>Audit: Record decision, evidence, and policy version
+    Ledger->>Audit: Record period reconciliation
 ```
 
 ## 7. Business rules
@@ -135,18 +144,25 @@ The following is a lifecycle scaffold. Rename, add, or remove states to reflect 
 
 ```mermaid
 stateDiagram-v2
-    [*] --> REQUESTED
-    REQUESTED --> VALIDATING
-    VALIDATING --> IN_PROGRESS: Valid
-    VALIDATING --> REJECTED: Invalid
-    IN_PROGRESS --> AWAITING_REVIEW: Exception or approval required
-    AWAITING_REVIEW --> IN_PROGRESS: Approved / retry permitted
-    AWAITING_REVIEW --> REJECTED: Declined
-    IN_PROGRESS --> COMPLETED: Success conditions met
-    REQUESTED --> CANCELLED: Authorized cancellation
-    COMPLETED --> [*]
-    REJECTED --> [*]
-    CANCELLED --> [*]
+    [*] --> ORDER_CAPTURED
+    ORDER_CAPTURED --> PAYMENT_PENDING
+    PAYMENT_PENDING --> FUNDED: Provider confirms collection
+    PAYMENT_PENDING --> PAYMENT_FAILED
+    FUNDED --> ALLOCATION_RECORDED
+    ALLOCATION_RECORDED --> HOLDING: Fulfillment or risk hold applies
+    ALLOCATION_RECORDED --> RELEASE_ELIGIBLE: Release conditions met
+    HOLDING --> RELEASE_ELIGIBLE: Hold cleared
+    HOLDING --> DISPUTE_REVIEW: Dispute or return opened
+    DISPUTE_REVIEW --> HOLDING: Claim remains open
+    DISPUTE_REVIEW --> ADJUSTED: Refund/chargeback approved
+    RELEASE_ELIGIBLE --> PAYOUT_PENDING
+    PAYOUT_PENDING --> PAID_OUT: Provider confirms transfer
+    PAYOUT_PENDING --> PAYOUT_EXCEPTION: Transfer failed or unknown
+    PAYOUT_EXCEPTION --> PAYOUT_PENDING: Reconciled safe retry
+    PAID_OUT --> RECONCILED
+    ADJUSTED --> RECONCILED
+    PAYMENT_FAILED --> [*]
+    RECONCILED --> [*]
 ```
 
 ## 10. Exceptions and recovery
