@@ -108,7 +108,9 @@ Define metric formulas, data sources, review cadence, and baseline requirements.
 
 | Business rule | Acceptance criteria | Related data / process step |
 |---|---|---|
-| BR-001 | AC-01 | [Reference] |
+| BR-001 | AC-01, AC-02 | [Entity, event, or process step] |
+
+Create one row for every material business rule. Map it to the exact acceptance criteria that verify it; do not use broad ranges such as `BR-001 to BR-008` unless every rule in that range is genuinely covered by the same criteria. If a rule has no testable acceptance criterion, record it as a coverage gap and add a criterion or justify why it is not testable.
 
 ---
 
