@@ -36,13 +36,14 @@ Sending branch, carrier, and receiving branch may report different quantities. R
 
 ## 4. Trigger, preconditions, and postconditions
 
-**Trigger:** A valid business event or authorized user action initiates the workflow.
+**Trigger:** An authorized branch submits a stock transfer request and the source location accepts it for fulfillment.
 
 **Preconditions**
-- Initiating actor or service is authenticated.
-- Required master data, policy versions, and reference records are available.
-- Requested object is in a state that permits the operation.
-- Required permissions and segregation-of-duty controls are configured.
+- Source and destination locations, SKU, unit of measure, and requested quantity are valid.
+- Available-to-transfer stock excludes reserved, damaged, quarantined, and blocked units.
+- Transfer approval limits, dispatch authority, custody method, and receipt roles are defined.
+- In-transit inventory accounting and partial receipt/shortage handling are specified.
+- A unique transfer reference prevents duplicate dispatch.
 
 **Postconditions**
 - Business object has an explicit final or pending status.
@@ -141,7 +142,7 @@ Use stable identifiers, explicit timestamps/time zones, currency and unit defini
 
 ## 9. State model
 
-The following is a lifecycle scaffold. Rename, add, or remove states to reflect the domain and define permitted transitions in the implementation specification.
+The state names and transitions below describe the proposed lifecycle for this workflow. Confirm guards, role permissions, timeout transitions, and terminal-state behavior with the process owner and implementation team before production use.
 
 ```mermaid
 stateDiagram-v2
