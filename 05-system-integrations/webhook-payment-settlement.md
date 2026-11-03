@@ -78,7 +78,7 @@ flowchart TD
 
 ## 6. System interaction view
 
-This logical sequence shows system responsibilities. Adapt participants and messages to the selected architecture and provider contract.
+The sequence models payment intent creation, provider webhook authentication, durable event persistence, deduplication, ledger state transition, and provider reconciliation.
 
 ```mermaid
 sequenceDiagram
