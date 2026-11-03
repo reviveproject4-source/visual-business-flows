@@ -79,7 +79,7 @@ flowchart TD
 
 ## 6. System interaction view
 
-This logical sequence shows system responsibilities. Adapt participants and messages to the selected architecture and provider contract.
+The sequence models order-line allocation, held-funds eligibility, fee/reserve calculation, release authorization, provider payout, ledger reversal, and settlement reconciliation.
 
 ```mermaid
 sequenceDiagram
