@@ -2,13 +2,11 @@
 
 Use this checklist before treating a workflow as an implementation specification. A passing Markdown or Mermaid check proves document/render integrity only; it does not prove that the business process is correct.
 
-
 ## 1. Process-owner validation
 - [ ] Process owner and approving authority are named by role.
 - [ ] As-Is facts are separated from To-Be recommendations and assumptions.
 - [ ] Policy-dependent decisions, thresholds, SLAs, and legal/accounting/security constraints are confirmed.
 - [ ] Scope boundaries, trigger, preconditions, and postconditions are specific to this workflow.
-
 
 ## 2. Business and system behavior
 - [ ] Business process diagram covers the happy path, decisions, alternate paths, exceptions, and recovery.
@@ -17,7 +15,6 @@ Use this checklist before treating a workflow as an implementation specification
 - [ ] Human actions and automated behavior are distinguishable.
 - [ ] No diagram contains unresolved generic placeholders or contradictory paths.
 
-
 ## 3. Requirements and traceability
 - [ ] Every business rule has a stable ID, an unambiguous statement, source/type (policy, observed fact, or assumption), and system implication.
 - [ ] Every acceptance criterion is independently testable in Given/When/Then form.
@@ -25,14 +22,12 @@ Use this checklist before treating a workflow as an implementation specification
 - [ ] Negative, boundary, duplicate, timeout, retry, and authorization scenarios are covered where relevant.
 - [ ] Open decisions are explicit; implementation must not silently invent missing policy.
 
-
 ## 4. Data, security, and operations
 - [ ] Entities, identifiers, relationships, required fields, validation, sensitivity, and retention are defined.
 - [ ] Authorization is specified at the server/service boundary, including segregation of duties for sensitive actions.
 - [ ] Audit events include actor/service, timestamp, object, action, outcome, reason, and correlation/external reference where relevant.
 - [ ] Concurrency, idempotency, transaction boundaries, retry policy, and recovery ownership are specified where relevant.
 - [ ] Metrics have formulas, numerator/denominator, source, window, owner, and baseline requirement.
-
 
 ## 5. Developer handoff
 - [ ] API/event contracts, payload examples, error codes, and integration ownership are documented when needed.
