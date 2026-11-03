@@ -219,14 +219,14 @@ Assign a named metric owner, reporting window, and baseline before setting a tar
 
 | Business rule | Acceptance criterion | Verification focus |
 |---|---|---|
-| BR-001 | AC-05 | Requirement and test coverage for the rule |
-| BR-002 | AC-01 | Requirement and test coverage for the rule |
-| BR-003 | AC-03 | Requirement and test coverage for the rule |
-| BR-004 | AC-03 | Requirement and test coverage for the rule |
-| BR-005 | AC-02 | Requirement and test coverage for the rule |
-| BR-006 | AC-02 | Requirement and test coverage for the rule |
-| BR-007 | AC-04 | Requirement and test coverage for the rule |
-| BR-008 | AC-04 | Requirement and test coverage for the rule |
+| BR-001 | AC-05 | a unique transfer ID, source, destination, and approved line quantities are stored |
+| BR-002 | AC-01 | origin available stock decreases and equal in-transit quantity is created |
+| BR-003 | AC-03 | evidence and witnessed inspection are required before closure |
+| BR-004 | AC-03 | evidence and witnessed inspection are required before closure |
+| BR-005 | AC-02 | actual units enter destination stock and difference remains an open discrepancy |
+| BR-006 | AC-02 | actual units enter destination stock and difference remains an open discrepancy |
+| BR-007 | AC-04 | automatic liability assignment is prohibited and authorized review is required |
+| BR-008 | AC-04 | automatic liability assignment is prohibited and authorized review is required |
 
 ---
 
