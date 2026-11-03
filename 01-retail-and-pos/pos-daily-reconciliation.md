@@ -1,77 +1,282 @@
-# End-of-Day POS Reconciliation, Blind Balancing & Anti-Theft Flow
+# POS End-of-Shift Reconciliation and Cash Variance Control
 
-> **Domain:** Brick-and-Mortar Retail, F&B, Supermarket, Franchise POS  
-> **Core Mission:** Menghilangkan kebocoran uang kasir (*cash leakage*), mencegah manipulasi nota (*Void Fraud*), dan memangkas waktu tutup buku dari 2 jam menjadi 15 menit.
+> **Domain:** Retail, food service, multi-register operations  
+> **Document type:** To-Be workflow pattern  
+> **Status:** Reference design — validate against local policy before implementation  
+> **Primary objective:** Establish a controlled, auditable process for reconciling recorded tender amounts against independently counted physical funds.
 
----
+## 1. Problem statement
 
-## 1. Masalah Nyata & Risiko Kecurangan di Lapangan
+At shift close, the amount recorded by the POS may differ from the cash and other tender evidence physically available. Common causes include counting mistakes, incorrect tender selection, unrecorded payouts, duplicate or reversed transactions, timing differences, and potential misconduct.
 
-Di bisnis kasir nyata, kebocoran uang paling sering terjadi lewat **3 celah sistem**:
-1. **Modus Void Fraud:** Kasir melayani pembeli tunai, uang diterima, tetapi setelah pembeli pergi, kasir membatalkan (*void*) transaksi di sistem dan mengantongi uangnya.
-2. **Hitungan Terbuka (Open Count):** Kasir melihat angka penjualan di layar komputer terlebih dahulu, lalu mencocok-cocokkan uang fisik di laci agar terlihat pas.
-3. **Selisih yang Disembunyikan:** Selisih kas ditutupi dengan uang tip pelanggan tanpa pernah tercatat di laporan keuangan resmi.
+The process must detect and explain differences without allowing staff to conceal them through undocumented adjustments or unauthorized cash movements.
 
----
+## 2. Scope
 
-## 2. Diagram Alur Sistem: "Blind Count & Dual-PIN Audit"
+**In scope**
+- Closing a register or cashier shift.
+- Capturing expected tender totals from a stable transaction snapshot.
+- Blind physical cash count and non-cash tender reconciliation.
+- Recount, investigation, approval, evidence, and accounting handoff.
+- Audit trail and controlled reopening.
 
-Alur ini menerapkan prinsip perbankan modern: **Kasir sama sekali tidak boleh melihat total uang sistem sebelum menghitung uang fisik secara murni (*Blind Balancing*)**.
+**Out of scope**
+- Payroll deductions or disciplinary decisions.
+- Automatic assignment of every shortage to a cashier or driver.
+- Bank settlement reconciliation beyond recording available settlement references.
+- Tax treatment and accounting policy configuration.
+
+These decisions require organization-specific policy and authorized review.
+
+## 3. Actors and systems
+
+| Actor / system | Responsibility |
+|---|---|
+| Cashier | Initiates close, counts assigned drawer, submits count, explains known differences |
+| Shift supervisor | Witnesses recount, reviews evidence, approves permitted resolution |
+| Store manager / owner | Reviews material or unresolved variances and policy exceptions |
+| POS | Freezes the shift snapshot, masks expected totals during blind count, calculates variance, records events |
+| Payment provider / acquirer | Supplies settlement or transaction references for non-cash tenders |
+| Accounting system | Receives approved reconciliation and variance records; does not silently rewrite source transactions |
+
+**Segregation of duties:** Where staffing permits, the person who performs the initial count should not be the sole approver of a non-zero variance or manual adjustment.
+
+## 4. Trigger, preconditions, and outcomes
+
+**Trigger:** Cashier requests end-of-shift close for a specific register and shift.
+
+**Preconditions**
+- Cashier is authenticated and assigned to the register/shift.
+- No other close operation is already in progress for the same shift.
+- POS has persisted all locally accepted transactions, or explicitly records pending synchronization.
+- Cash drawer and tender evidence are available.
+- Supervisor coverage or an approved exception route is defined.
+
+**Successful postconditions**
+- A reconciliation record exists for each tender type.
+- The physical count and expected amount are preserved as separate values.
+- Every variance has a status, owner, evidence reference, and approval history.
+- The shift is closed only when required controls are satisfied or an authorized exception is recorded.
+
+## 5. Business process view
+
+This view describes human responsibilities and operational decisions, independent of a specific POS implementation.
+
+```mermaid
+flowchart TD
+    A([Cashier requests shift close]) --> B[Supervisor confirms register and shift identity]
+    B --> C[Stop new sales on the register and secure the drawer]
+    C --> D[Cashier counts physical cash without seeing expected cash total]
+    D --> E[Cashier records denomination count]
+    E --> F[Reconcile non-cash tenders using POS totals and provider evidence]
+    F --> G{All tender variances are zero?}
+    G -->|Yes| H[Cashier and supervisor review close summary]
+    G -->|No| I[Preserve initial count and open variance case]
+    I --> J[Independent witnessed recount]
+    J --> K{Recount explains difference?}
+    K -->|Yes| L[Record recount result and reason; retain both counts]
+    K -->|No| M[Collect supporting evidence and investigate]
+    M --> N{Authorized resolution available?}
+    N -->|Yes| O[Supervisor approves documented resolution]
+    N -->|No| P[Escalate to manager; keep case unresolved]
+    L --> H
+    O --> H
+    P --> Q[Close shift as exception only if policy permits]
+    H --> R[Sign off and archive reconciliation evidence]
+    Q --> R
+    R --> S([Shift close complete])
+```
+
+## 6. System interaction view
+
+This sequence is a logical design. It does not prescribe a vendor API, database schema, or specific payment-provider integration.
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Cashier as Kasir (Operator Shift)
-    participant POS as Terminal POS Software
-    participant Drawer as Laci Kas Fisik
-    actor Manager as Supervisor / Pemilik Toko
-    participant Accounting as Jurnal Akuntansi (Cloud DB)
+    actor Cashier
+    actor Supervisor
+    participant POS as POS Application
+    participant Audit as Audit Log
+    participant Accounting as Accounting System
 
-    Note over Cashier,POS: TAHAP 1: FREEZE OPERASIONAL
-    Cashier->>POS: Klik "Tutup Shift / Rekonsiliasi Akhir Hari"
-    POS->>POS: Kunci terminal (Cegah input transaksi baru atau void)
-    POS->>POS: Hitung Total Penjualan Sistem Otomatis (A) = Cash + QRIS + EDC Card
-    
-    Note over Cashier,Drawer: TAHAP 2: BLIND CASH COUNT (Hitung Buta)
-    Note over Cashier,POS: Layar POS TIDAK MENAMPILKAN angka (A) agar kasir tidak curang
-    Cashier->>Drawer: Hitung fisik uang kertas, koin, dan struk EDC
-    Cashier->>POS: Input rincian fisik: lembar 100rb, 50rb, 20rb, dll. (B)
-    
-    Note over POS: TAHAP 3: EVALUASI VARIANCE (SELISIH)
-    POS->>POS: Hitung Selisih: Discrepancy = B - A
-    
-    alt Selisih == Rp 0 (Balance Sempurna)
-        POS->>Accounting: Catat Status: "SHIFT_BALANCED" ($0.00 Variance)
-        POS-->>Cashier: Cetak Struk Tutup Kasir & Buka Kunci Laci untuk Setoran
-    else Selisih != Rp 0 (Uang Kurang atau Lebih)
-        POS->>POS: Kunci layar merah: "SELISIH KAS TERDETEKSI"
-        POS->>Manager: Kirim Notifikasi WhatsApp/Push Alert: Selisih Rp X di Register #1
-        Manager->>Drawer: Dampingi Kasir Hitung Ulang Fisik Bersama
-        
-        alt Salah Hitung Kasir (Setelah hitung ulang ternyata pas)
-            Cashier->>POS: Koreksi Angka Hitungan Fisik
-            POS->>Accounting: Catat Status: "BALANCED_AFTER_RECOUNT"
-        else Selisih Riil Terbukti (Uang Fisik Memang Hilang / Berlebih)
-            Manager->>POS: Input PIN Supervisor + Alasan Wajib (Memo Investigasi)
-            POS->>Accounting: Masukkan Selisih ke Akun Beban "Cash Over/Short"
-            POS->>Accounting: Catat Log Audit: ID Kasir, ID Supervisor, Nominal Selisih, Jam
-            POS-->>Cashier: Cetak Lembar Berita Acara Selisih Kasir (Wajib TTD Kasir & Manager)
-            POS-->>Manager: Arsipkan Laporan Discrepancy untuk Evaluasi Gaji / SOP
+    Cashier->>POS: Request close(register_id, shift_id)
+    POS->>POS: Validate identity, permissions, and shift status
+    POS->>POS: Create immutable close snapshot and close_id
+    POS->>Audit: Record CLOSE_STARTED and snapshot reference
+    POS-->>Cashier: Show blind-count form (expected cash masked)
+    Cashier->>POS: Submit denomination count and count_id
+    POS->>POS: Validate count and calculate variance by tender
+    POS->>Audit: Record COUNT_SUBMITTED and calculation version
+
+    alt All tender variances are zero
+        POS-->>Cashier: Show balanced close summary
+        Supervisor->>POS: Approve close
+        POS->>Audit: Record CLOSE_APPROVED
+        POS->>Accounting: Submit reconciliation using idempotency key
+        Accounting-->>POS: Return posting reference or pending status
+    else One or more variances exist
+        POS-->>Cashier: Show variance case; preserve initial count
+        POS->>Audit: Record VARIANCE_OPENED
+        Supervisor->>POS: Record witnessed recount and evidence
+        POS->>POS: Recalculate without overwriting prior count
+        POS-->>Supervisor: Show original and recount comparison
+        Supervisor->>POS: Approve, reject, or escalate with reason
+        POS->>Audit: Record decision, actor, timestamp, and evidence
+        opt Approved accounting handoff
+            POS->>Accounting: Submit approved variance with idempotency key
+            Accounting-->>POS: Return posting reference or rejection
         end
     end
+    POS-->>Cashier: Return final close status and reference
 ```
 
+## 7. Business rules
+
+| ID | Rule | Implementation implication |
+|---|---|---|
+| BR-001 | A close operation must reference one register and one shift. | Enforce unique active close per register/shift. |
+| BR-002 | Expected tender totals must be calculated from a persisted transaction snapshot. | Store snapshot ID, cutoff time, and calculation version. |
+| BR-003 | Expected cash must remain hidden from the cashier until the initial physical count is submitted. | Enforce server-side role-based visibility, not merely CSS masking. |
+| BR-004 | Initial counts are immutable after submission. | Corrections create a new count attempt linked to the original. |
+| BR-005 | Variance is calculated separately for each tender type. | Do not net cash shortage against card or QRIS overage. |
+| BR-006 | Every non-zero variance requires a reason code and supporting note; evidence is required according to risk policy. | Make reason and evidence requirements configurable and auditable. |
+| BR-007 | A recount must identify the counter, witness, time, and count attempt. | Preserve both initial and recount records. |
+| BR-008 | Only an authorized role may approve a variance resolution or exception close. | Check permission on the server for every approval command. |
+| BR-009 | No user may silently edit the expected total, delete a count, or overwrite a variance. | Use append-only event history and controlled reversal entries. |
+| BR-010 | Cash overage and shortage remain separately visible. | Do not offset one tender or shift against another without an explicit, approved accounting policy. |
+| BR-011 | Accounting handoff must be idempotent. | Use a stable key derived from close ID and posting type; handle duplicate delivery safely. |
+| BR-012 | A failed accounting handoff must remain visible as pending or failed. | Retry safely and provide an operational queue; never mark posted without confirmation. |
+| BR-013 | Reopening a closed shift requires elevated authorization and a recorded reason. | Create a reopen event; retain the previous close and its audit history. |
+| BR-014 | An unresolved variance must not be represented as balanced. | Use explicit statuses such as OPEN, UNDER_REVIEW, APPROVED_EXCEPTION, and RESOLVED. |
+
+## 8. Calculation and data requirements
+
+For each tender type:
+
+- **Expected amount:** sum of eligible, persisted POS tender entries within the close snapshot, adjusted only by explicitly recorded and authorized cash movements.
+- **Counted amount:** physical amount counted for cash; provider/acquirer evidence or settlement reference for non-cash tender.
+- **Variance:** counted amount minus expected amount.
+
+For cash denomination counting:
+
+`counted_cash = Σ(denomination_value × denomination_quantity)`
+
+`cash_variance = counted_cash − expected_cash`
+
+The system must define how opening float, paid-in, paid-out, cash drops, refunds, tips, foreign currency, and pending offline transactions affect expected cash. Do not assume they are included or excluded without an explicit policy.
+
+**Minimum data entities**
+
+| Entity | Key fields |
+|---|---|
+| ShiftClose | close_id, register_id, shift_id, snapshot_id, status, started_at, closed_at |
+| TenderSummary | close_id, tender_type, expected_amount, counted_amount, variance_amount, currency |
+| CountAttempt | count_id, close_id, attempt_no, counted_by, witnessed_by, submitted_at |
+| CountLine | count_id, denomination, quantity, line_total |
+| VarianceCase | case_id, close_id, tender_type, reason_code, status, assigned_to |
+| Evidence | evidence_id, case_id, file/reference, uploaded_by, uploaded_at |
+| Approval | approval_id, case_id/close_id, decision, approver_id, reason, decided_at |
+| AuditEvent | event_id, aggregate_id, event_type, actor_id, timestamp, correlation_id |
+| AccountingPosting | posting_id, close_id, idempotency_key, external_reference, status |
+
+Amounts must use fixed-precision decimal or integer minor units, never binary floating-point arithmetic. Currency and rounding rules must be explicit.
+
+## 9. State model
+
+```mermaid
+stateDiagram-v2
+    [*] --> OPEN
+    OPEN --> CLOSE_REQUESTED
+    CLOSE_REQUESTED --> COUNT_PENDING
+    COUNT_PENDING --> VARIANCE_REVIEW: variance detected
+    COUNT_PENDING --> AWAITING_APPROVAL: all tenders balanced
+    VARIANCE_REVIEW --> RECOUNT_PENDING
+    RECOUNT_PENDING --> AWAITING_APPROVAL: explained or policy-approved
+    RECOUNT_PENDING --> ESCALATED: unresolved
+    ESCALATED --> AWAITING_APPROVAL: authorized decision
+    AWAITING_APPROVAL --> ACCOUNTING_PENDING: close approved
+    ACCOUNTING_PENDING --> CLOSED: posting confirmed or policy allows non-blocking handoff
+    ACCOUNTING_PENDING --> POSTING_FAILED: posting rejected/failed
+    POSTING_FAILED --> ACCOUNTING_PENDING: safe retry
+    CLOSED --> REOPENED: elevated authorization
+    REOPENED --> CLOSE_REQUESTED
+```
+
+The organization must decide whether accounting posting is a hard prerequisite for operational close. If it is not, the close status and accounting-posting status must remain separate.
+
+## 10. Exceptions and recovery
+
+| Scenario | Required behavior | Must not happen |
+|---|---|---|
+| Cashier submits malformed denomination count | Reject input with validation feedback; preserve draft if safe | Calculate from invalid quantities |
+| Network drops after count submission | Return the same result on retry using request/idempotency key | Create duplicate count attempts unintentionally |
+| POS has unsynchronized offline sales | Flag snapshot as incomplete and follow an approved offline-close procedure | Claim reconciliation is final using incomplete data |
+| Supervisor unavailable | Route to designated alternate approver or keep close pending | Allow cashier to approve their own exception without policy authorization |
+| Recount differs from initial count | Preserve both attempts and require explanation | Replace the initial count |
+| Accounting endpoint unavailable | Queue idempotent posting and expose pending state | Report successful posting without acknowledgement |
+| Suspected fraud or unexplained material variance | Preserve evidence and escalate under investigation policy | Automatically deduct wages or assign liability |
+| Shift closed in error | Require elevated reopen approval and append audit event | Delete or rewrite the original close |
+
+## 11. Authorization and audit requirements
+
+- Cashier: initiate close, submit own count, add explanation; cannot approve own non-zero variance unless an explicit policy permits it.
+- Supervisor: witness recount, review evidence, approve within configured authority limit.
+- Manager/owner: review escalations and approve exceptions above supervisor authority.
+- Auditor: read-only access to close records, evidence references, and event history.
+- System/service account: create snapshots and submit accounting handoffs; cannot impersonate a human approver.
+
+Every material event should record actor or service identity, timestamp, register, shift, close ID, correlation ID, action, prior state, new state, and reason/evidence reference where applicable. Protect evidence access according to privacy and retention policy.
+
+## 12. Acceptance criteria
+
+1. **Blind count:** Given a cashier starts a close, when the initial count form is displayed, then expected cash is not exposed through the UI or the cashier-facing API response.
+2. **Snapshot consistency:** Given a close has started, when eligible transactions are calculated, then the result references a stable snapshot and cutoff time.
+3. **Tender separation:** Given cash is short and card is over, when variance is calculated, then the two differences remain separate and are not netted.
+4. **Immutable attempts:** Given an initial count is submitted, when a recount is required, then a new count attempt is created and the original remains readable.
+5. **Approval control:** Given a non-zero variance, when an unauthorized user attempts approval, then the server rejects the command and records the denied action where required.
+6. **Evidence traceability:** Given a variance case is escalated, when an auditor opens it, then the initial count, recounts, reason, evidence references, decisions, and timestamps are available.
+7. **Idempotent posting:** Given an accounting request is retried with the same idempotency key, then no duplicate posting is created.
+8. **Failure visibility:** Given accounting rejects or cannot receive a posting, then the close retains a visible pending/failed posting state and a retry path.
+9. **No silent adjustment:** Given a user attempts to change expected totals or delete a submitted count, then the operation is rejected or represented as a separately authorized correction event.
+10. **Reopen control:** Given a closed shift is reopened, then elevated authorization and a reason are required and the original close history remains intact.
+
+## 13. Operational metrics
+
+Use these as measurement definitions, not promised outcomes:
+
+- Variance incidence: number of shifts with non-zero variance / total closed shifts.
+- Net and gross variance by tender type and register.
+- Recount rate and percentage resolved after recount.
+- Median time from close request to final operational close.
+- Percentage of accounting handoffs pending or failed beyond the agreed SLA.
+- Repeat variance by register, shift, reason code, and process step.
+
+Establish a baseline before setting targets. Review metrics for unintended incentives; a low reported variance is not proof that controls are effective.
+
+## 14. Assumptions and open decisions
+
+The following must be confirmed with stakeholders before implementation:
+
+- Whether each cashier has an individual drawer or shares a register.
+- Treatment of opening float, cash drops, paid-in/paid-out, tips, refunds, and foreign currency.
+- Source of truth for QRIS, card, and other non-cash tender totals.
+- Offline transaction policy and when a close snapshot is considered complete.
+- Variance thresholds, reason codes, evidence requirements, and approval limits.
+- Whether accounting posting blocks operational close.
+- Retention period, privacy controls, and investigation procedures.
+- Applicable labor, accounting, tax, and payment-provider requirements.
+
+## 15. Traceability
+
+| Requirement group | Related rules | Acceptance criteria |
+|---|---|---|
+| Close and snapshot | BR-001, BR-002 | AC-02 |
+| Blind count and tender calculation | BR-003, BR-005 | AC-01, AC-03 |
+| Recount and auditability | BR-004, BR-006, BR-007, BR-009 | AC-04, AC-06, AC-09 |
+| Approval and exception | BR-008, BR-013, BR-014 | AC-05, AC-10 |
+| Accounting integration | BR-011, BR-012 | AC-07, AC-08 |
+
 ---
 
-## 3. Checklist Aturan Sistem (Untuk Programmer & Tim Bisnis)
-
-* [ ] **Aturan Blind Screen:** Sebelum kasir menekan tombol "Submit Hitungan Fisik", layar POS wajib disamarkan (*masked*). Tidak boleh ada angka target penjualan yang terlihat.
-* [ ] **Aturan Anti-Void Pasca Tutup:** Tombol pembatalan (*void*) otomatis dinonaktifkan permanen saat proses rekonsiliasi kasir dimulai.
-* [ ] **Pemisahan Akun Akuntansi:** Uang lebih (*cash overage*) tidak boleh dipakai menutup uang kurang (*cash shortage*). Keduanya harus masuk ke buku akun "Selisih Kas" secara transparan.
-
----
-
-## 4. Dampak Operasional bagi Bisnis
-
-* **Kebocoran Kas Turun Hingga 98%:** Kasir tidak bisa memanipulasi angka karena tidak tahu berapa angka riil yang sedang ditunggu oleh sistem komputer.
-* **Audit Trail Jelas:** Pemilik toko yang tidak berada di lokasi langsung tahu detik itu juga jika ada selisih kas di toko cabang tanpa perlu menunggu laporan bulanan.
+**Implementation note:** This is a reference pattern, not a validated policy for every retailer. Confirm the open decisions and obtain operational, finance, security, and legal review before building or deploying it.
