@@ -35,13 +35,14 @@ Expense requests can bypass budget ownership, split purchases to avoid approval 
 
 ## 4. Trigger, preconditions, and postconditions
 
-**Trigger:** A valid business event or authorized user action initiates the workflow.
+**Trigger:** An employee or authorized requester submits an expense or purchase request for approval.
 
 **Preconditions**
-- Initiating actor or service is authenticated.
-- Required master data, policy versions, and reference records are available.
-- Requested object is in a state that permits the operation.
-- Required permissions and segregation-of-duty controls are configured.
+- Requester, legal entity, department/cost center, budget period, and expense category are identifiable.
+- Approval thresholds and delegation rules have an effective version and currency basis.
+- Required receipts, invoice, business purpose, and vendor details are specified by category.
+- Self-approval is blocked where segregation-of-duties policy prohibits it.
+- Duplicate submission and budget reservation behavior are defined.
 
 **Postconditions**
 - Business object has an explicit final or pending status.
@@ -142,7 +143,7 @@ Use stable identifiers, explicit timestamps/time zones, currency and unit defini
 
 ## 9. State model
 
-The following is a lifecycle scaffold. Rename, add, or remove states to reflect the domain and define permitted transitions in the implementation specification.
+The state names and transitions below describe the proposed lifecycle for this workflow. Confirm guards, role permissions, timeout transitions, and terminal-state behavior with the process owner and implementation team before production use.
 
 ```mermaid
 stateDiagram-v2
