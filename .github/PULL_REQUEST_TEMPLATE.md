@@ -1,12 +1,17 @@
+# Pull Request
+
 ## Summary
+
 Describe the business problem and the change made.
 
 ## Scope
+
 - Workflow / files changed:
 - Domain:
 - Intended audience:
 
 ## Analysis quality
+
 - [ ] Problem, objective, and scope are clear.
 - [ ] Actors, trigger, preconditions, and outcomes are defined.
 - [ ] Business and system views are separated where relevant.
@@ -16,11 +21,13 @@ Describe the business problem and the change made.
 - [ ] Acceptance criteria are testable and traceable.
 
 ## Validation
+
 - [ ] Mermaid diagrams were previewed.
-- [ ] README catalog and relative links were updated if needed.
+- [ ] README catalog and links were updated if needed.
 - [ ] No confidential or personal data is included.
 - [ ] Quantitative claims are evidenced or removed.
 - [ ] Policy-dependent decisions are marked for validation.
 
 ## Reviewer notes
+
 List unresolved questions, limitations, or stakeholder validation still required.
