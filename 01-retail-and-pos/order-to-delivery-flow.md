@@ -55,25 +55,27 @@ This flow describes the human and organizational process, independent of a speci
 
 ```mermaid
 flowchart TD
-    Start([Trigger]) --> S1
-    S1[Capture order and validate items, price, and delivery details]
-    S2[Authorize or confirm payment according to tender method]
-    S3[Reserve available stock against the order]
-    S4[Release paid and fulfillable order to picking]
-    S5[Pick items and record substitutions or shortages]
-    S6[Pack, label, and stage the order]
-    S7[Dispatch to customer or hand over to courier]
-    S8[Capture proof of handover or delivery]
-    S9[Close order and reconcile payment and fulfillment records]
-    S1 --> S2
-    S2 --> S3
-    S3 --> S4
-    S4 --> S5
-    S5 --> S6
-    S6 --> S7
-    S7 --> S8
-    S8 --> S9
-    S9 --> End([Outcome])
+    A([Customer submits order]) --> B[Validate items, price, address, and channel]
+    B --> C{Order data valid?}
+    C -->|No| X[Return validation errors]
+    C -->|Yes| D[Check stock and reserve available quantity]
+    D --> E{All items fulfillable?}
+    E -->|No| F[Offer approved substitution or partial fulfillment]
+    F --> G{Customer accepts?}
+    G -->|No| H[Cancel order and release reservation]
+    G -->|Yes| I[Confirm revised order]
+    E -->|Yes| J[Authorize payment]
+    I --> J
+    J --> K{Payment confirmed?}
+    K -->|No| L[Keep unpaid or cancel; release reservation]
+    K -->|Yes| M[Pick, verify, pack, and label]
+    M --> N{Picking discrepancy?}
+    N -->|Yes| O[Resolve shortage or obtain customer decision]
+    O --> M
+    N -->|No| P[Handover to customer or courier]
+    P --> Q[Capture handover/delivery evidence]
+    Q --> R[Reconcile order, payment, and fulfillment]
+    R --> S([Complete])
 ```
 
 ## 6. System interaction view
