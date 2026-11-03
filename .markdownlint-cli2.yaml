@@ -1,0 +1,5 @@
+# Markdown lint configuration
+config:
+  default: true
+  MD013: false
+  MD060: false
