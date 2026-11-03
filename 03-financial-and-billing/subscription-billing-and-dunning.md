@@ -54,27 +54,24 @@ This flow describes the human and organizational process, independent of a speci
 
 ```mermaid
 flowchart TD
-    Start([Trigger]) --> S1
-    S1[Generate invoice from active subscription and pricing version]
-    S2[Submit collection request with stable idempotency key]
-    S3[Process provider result and normalize payment state]
-    S4[On success, mark invoice paid and extend entitlement]
-    S5[On failure, classify retryable versus non-retryable reason]
-    S6[Apply configured grace and access policy]
-    S7[Notify subscriber with secure payment update route]
-    S8[Schedule bounded retry using provider-aware rules]
-    S9[Reconcile late success, dispute, refund, or cancellation]
-    S10[Close dunning journey when balance is settled or subscription terminates]
-    S1 --> S2
-    S2 --> S3
-    S3 --> S4
-    S4 --> S5
-    S5 --> S6
-    S6 --> S7
-    S7 --> S8
-    S8 --> S9
-    S9 --> S10
-    S10 --> End([Outcome])
+    A([Billing cycle starts]) --> B[Generate invoice from subscription and pricing version]
+    B --> C[Submit collection with idempotency key]
+    C --> D{Provider confirms payment?}
+    D -->|Yes| E[Mark invoice paid once]
+    E --> F[Extend entitlement and send receipt]
+    D -->|No| G[Classify failure as retryable or non-retryable]
+    G --> H{Retry permitted?}
+    H -->|No| I[Apply configured suspension/cancellation policy]
+    H -->|Yes| J[Apply grace policy and notify subscriber]
+    J --> K[Schedule bounded retry]
+    K --> L{Retry succeeds?}
+    L -->|Yes| E
+    L -->|No| M{Retry window remains?}
+    M -->|Yes| K
+    M -->|No| I
+    F --> N[Reconcile late events, refunds, and disputes]
+    I --> N
+    N --> O([Close dunning cycle with final status])
 ```
 
 ## 6. System interaction view
