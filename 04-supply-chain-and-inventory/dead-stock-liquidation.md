@@ -187,6 +187,9 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - **AC-02:** Given a markdown breaches configured margin authority, when approval is requested, then it routes to a higher approver or is rejected.
 - **AC-03:** Given a lot is expired or recalled, when disposition is evaluated, then sale markdown is blocked.
 - **AC-04:** Given stock quantity changes during approval, when execution begins, then approved quantity is revalidated.
+- **AC-05:** Given stock is flagged for review, when the aging rule is applied, then the effective category-specific threshold and seasonality rule are recorded.
+- **AC-06:** Given supplier return or inter-location transfer is selected, when disposition is confirmed, then a receiving party and movement reference are required.
+- **AC-07:** Given a liquidation campaign is closed, when performance is reviewed, then recovery value and margin are compared with the approved baseline.
 
 ## 13. Operational metrics
 
@@ -212,9 +215,16 @@ Assign a named metric owner, reporting window, and baseline before setting a tar
 
 ## 15. Traceability
 
-| Rule group | Acceptance criteria | Implementation evidence |
+| Business rule | Acceptance criterion | Verification focus |
 |---|---|---|
-| BR-001 to BR-008 | AC-01 to AC-04 | Unit/integration tests, audit events, and process-owner sign-off |
+| BR-001 | AC-05 | Requirement and test coverage for the rule |
+| BR-002 | AC-01 | Requirement and test coverage for the rule |
+| BR-003 | AC-02 | Requirement and test coverage for the rule |
+| BR-004 | AC-04 | Requirement and test coverage for the rule |
+| BR-005 | AC-03 | Requirement and test coverage for the rule |
+| BR-006 | AC-01 | Requirement and test coverage for the rule |
+| BR-007 | AC-06 | Requirement and test coverage for the rule |
+| BR-008 | AC-07 | Requirement and test coverage for the rule |
 
 ---
 
