@@ -193,6 +193,8 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - **AC-02:** Given provider funds are unsettled, when payout eligibility is evaluated, then unsettled funds are excluded.
 - **AC-03:** Given a partial refund is approved, when ledger entries are created, then only affected allocation components are reversed.
 - **AC-04:** Given payout submission is retried, when the same batch key is used, then duplicate transfers are prevented or detected.
+- **AC-05:** Given a provider or contractual arrangement does not provide escrow, when the product describes the funds-holding flow, then it must not label the service as escrow.
+- **AC-06:** Given a vendor balance becomes negative after reversals, when settlement is evaluated, then the configured recovery/dispute policy is applied and no unsupported payout is created.
 
 ## 13. Operational metrics
 
@@ -218,9 +220,16 @@ Assign a named metric owner, reporting window, and baseline before setting a tar
 
 ## 15. Traceability
 
-| Rule group | Acceptance criteria | Implementation evidence |
+| Business rule | Acceptance criterion | Verification focus |
 |---|---|---|
-| BR-001 to BR-008 | AC-01 to AC-04 | Unit/integration tests, audit events, and process-owner sign-off |
+| BR-001 | AC-05 | Requirement and test coverage for the rule |
+| BR-002 | AC-01 | Requirement and test coverage for the rule |
+| BR-003 | AC-01 | Requirement and test coverage for the rule |
+| BR-004 | AC-02 | Requirement and test coverage for the rule |
+| BR-005 | AC-02 | Requirement and test coverage for the rule |
+| BR-006 | AC-03 | Requirement and test coverage for the rule |
+| BR-007 | AC-04 | Requirement and test coverage for the rule |
+| BR-008 | AC-06 | Requirement and test coverage for the rule |
 
 ---
 
