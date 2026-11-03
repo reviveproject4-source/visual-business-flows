@@ -200,7 +200,12 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - Discrepancy resolution time
 - Transfers with complete custody evidence
 
-Define numerator, denominator, source system, measurement window, owner, and baseline before setting targets. Metrics are measurement proposals, not promised improvements.
+- **Transfer lead time:** destination receipt timestamp minus source dispatch timestamp; report median and P90.
+- **Transfer fill rate:** accepted destination quantity ÷ dispatched quantity.
+- **Transfer variance rate:** transfers with quantity/condition variance ÷ completed transfers.
+- **In-transit aging:** open transfer value/count grouped by elapsed time since dispatch. Review weekly by lane and SKU.
+
+Assign a named metric owner, reporting window, and baseline before setting a target. These are measurement definitions, not promised improvements.
 
 ## 14. Assumptions and open decisions
 
