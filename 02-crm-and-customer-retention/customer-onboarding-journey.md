@@ -198,7 +198,12 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - Tier upgrade/downgrade counts
 - Reward redemption and reversal rates
 
-Define numerator, denominator, source system, measurement window, owner, and baseline before setting targets. Metrics are measurement proposals, not promised improvements.
+- **Onboarding completion rate:** new accounts reaching ACTIVE ÷ eligible registration starts.
+- **Time to activation:** ACTIVE timestamp minus registration-start timestamp; report median and P90.
+- **Verification failure rate:** verification attempts rejected/expired ÷ verification attempts.
+- Review weekly by channel, signup cohort, and failure reason; exclude test accounts.
+
+Assign a named metric owner, reporting window, and baseline before setting a target. These are measurement definitions, not promised improvements.
 
 ## 14. Assumptions and open decisions
 
