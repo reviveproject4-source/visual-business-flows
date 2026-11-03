@@ -36,13 +36,14 @@ A provider may confirm payment while the merchant application is offline or webh
 
 ## 4. Trigger, preconditions, and postconditions
 
-**Trigger:** A valid business event or authorized user action initiates the workflow.
+**Trigger:** A payment provider sends an event to the merchant's registered webhook endpoint for a previously created payment intent or transaction reference.
 
 **Preconditions**
-- Initiating actor or service is authenticated.
-- Required master data, policy versions, and reference records are available.
-- Requested object is in a state that permits the operation.
-- Required permissions and segregation-of-duty controls are configured.
+- Merchant/provider account, endpoint, signing secret or verification key, and supported event schema are configured.
+- Payment intent and merchant reference are persisted before asynchronous callback processing.
+- Event identifiers, idempotency keys, and allowed payment-state transitions are defined.
+- Durable event storage/queue and retry/dead-letter handling are available.
+- Settlement reconciliation ownership and provider lookup capability are established.
 
 **Postconditions**
 - Business object has an explicit final or pending status.
@@ -141,7 +142,7 @@ Use stable identifiers, explicit timestamps/time zones, currency and unit defini
 
 ## 9. State model
 
-The following is a lifecycle scaffold. Rename, add, or remove states to reflect the domain and define permitted transitions in the implementation specification.
+The state names and transitions below describe the proposed lifecycle for this workflow. Confirm guards, role permissions, timeout transitions, and terminal-state behavior with the process owner and implementation team before production use.
 
 ```mermaid
 stateDiagram-v2
