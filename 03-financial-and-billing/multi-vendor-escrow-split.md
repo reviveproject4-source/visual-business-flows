@@ -58,7 +58,7 @@ flowchart TD
     A([Multi-vendor order accepted]) --> B[Map order lines to vendors and calculate fee basis]
     B --> C[Collect buyer payment]
     C --> D{Provider confirms collection?}
-    D -->|No| X[Keep unpaid; do not create payable]
+    D -->|No| X[Keep unpaid, do not create payable]
     D -->|Yes| E[Record gross collection and vendor ledger allocations]
     E --> F[Track fulfillment, returns, and disputes per order line]
     F --> G{Release conditions satisfied?}
