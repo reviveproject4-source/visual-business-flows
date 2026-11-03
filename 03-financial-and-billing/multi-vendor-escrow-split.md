@@ -222,14 +222,14 @@ Assign a named metric owner, reporting window, and baseline before setting a tar
 
 | Business rule | Acceptance criterion | Verification focus |
 |---|---|---|
-| BR-001 | AC-05 | Requirement and test coverage for the rule |
-| BR-002 | AC-01 | Requirement and test coverage for the rule |
-| BR-003 | AC-01 | Requirement and test coverage for the rule |
-| BR-004 | AC-02 | Requirement and test coverage for the rule |
-| BR-005 | AC-02 | Requirement and test coverage for the rule |
-| BR-006 | AC-03 | Requirement and test coverage for the rule |
-| BR-007 | AC-04 | Requirement and test coverage for the rule |
-| BR-008 | AC-06 | Requirement and test coverage for the rule |
+| BR-001 | AC-05 | it must not label the service as escrow |
+| BR-002 | AC-01 | each line is attributed to the correct vendor and fee rule version |
+| BR-003 | AC-01 | each line is attributed to the correct vendor and fee rule version |
+| BR-004 | AC-02 | unsettled funds are excluded |
+| BR-005 | AC-02 | unsettled funds are excluded |
+| BR-006 | AC-03 | only affected allocation components are reversed |
+| BR-007 | AC-04 | duplicate transfers are prevented or detected |
+| BR-008 | AC-06 | the configured recovery/dispute policy is applied and no unsupported payout is created |
 
 ---
 
