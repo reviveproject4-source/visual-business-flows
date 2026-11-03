@@ -54,23 +54,26 @@ This flow describes the human and organizational process, independent of a speci
 
 ```mermaid
 flowchart TD
-    Start([Trigger]) --> S1
-    S1[Register return request and locate original sale]
-    S2[Validate purchase, return window, item, quantity, and prior return history]
-    S3[Inspect returned item and record condition evidence]
-    S4[Determine disposition: restock, quarantine, repair, supplier return, or write-off]
-    S5[Approve refund, exchange, or store credit under policy]
-    S6[Execute financial action using original payment reference where supported]
-    S7[Update inventory after physical receipt and disposition confirmation]
-    S8[Close return case and reconcile financial and stock records]
-    S1 --> S2
-    S2 --> S3
-    S3 --> S4
-    S4 --> S5
-    S5 --> S6
-    S6 --> S7
-    S7 --> S8
-    S8 --> End([Outcome])
+    A([Return requested]) --> B[Register original sale, item, quantity, and reason]
+    B --> C{Sale and return history verifiable?}
+    C -->|No| X[Hold or reject with reason]
+    C -->|Yes| D{Within return policy?}
+    D -->|No| X
+    D -->|Yes| E[Receive item and record inspection evidence]
+    E --> F{Condition and quantity accepted?}
+    F -->|No| G[Route to exception review]
+    F -->|Yes| H[Select disposition: restock, repair, quarantine, or supplier return]
+    G --> H
+    H --> I{Approval required?}
+    I -->|Yes| J[Obtain authorized approval]
+    I -->|No| K[Authorize refund, exchange, or credit]
+    J --> L{Approved?}
+    L -->|No| X
+    L -->|Yes| K
+    K --> M[Execute financial action and record provider result]
+    M --> N[Post inventory disposition for physically received units]
+    N --> O[Reconcile case, payment, and stock evidence]
+    O --> P([Close return case])
 ```
 
 ## 6. System interaction view
