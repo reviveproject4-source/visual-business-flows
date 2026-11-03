@@ -203,7 +203,12 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - Payment/order state mismatch rate
 - Settlement reconciliation variance
 
-Define numerator, denominator, source system, measurement window, owner, and baseline before setting targets. Metrics are measurement proposals, not promised improvements.
+- **Webhook acceptance rate:** authenticated, schema-valid events durably acknowledged ÷ received events.
+- **Processing latency:** ledger-application timestamp minus provider-event timestamp; report median and P99.
+- **Duplicate suppression count:** duplicate event deliveries safely ignored, monitored alongside duplicate side-effect incidents.
+- **Reconciliation lag:** time between provider final state and merchant ledger agreement. Review daily by provider/event type.
+
+Assign a named metric owner, reporting window, and baseline before setting a target. These are measurement definitions, not promised improvements.
 
 ## 14. Assumptions and open decisions
 
