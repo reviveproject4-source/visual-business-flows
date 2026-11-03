@@ -82,21 +82,25 @@ This logical sequence shows system responsibilities. Adapt participants and mess
 ```mermaid
 sequenceDiagram
     autonumber
-    actor User as Business actor
-    participant App as Business application
-    participant Core as Domain service
-    participant External as External system
-    participant Audit as Audit/event store
-    User->>App: Submit request or business event
-    App->>Core: Validate identity, scope, and business rules
-    Core->>Core: Evaluate state and authorization
-    Core->>Audit: Persist decision and correlation reference
-    Core->>External: Send authorized request when required
-    External-->>Core: Return result or asynchronous event
-    Core->>Core: Validate response and apply allowed transition
-    Core->>Audit: Record outcome and processing status
-    Core-->>App: Return current status and next action
-    App-->>User: Show outcome or actionable exception
+    participant CRM
+    participant Consent as Consent Store
+    participant Segment as Segmentation Service
+    participant Campaign
+    participant Channel as Messaging Provider
+    participant Commerce as Order Service
+    participant Analytics
+    CRM->>Segment: Provide customer activity snapshot
+    Segment->>Consent: Check consent, suppression, and contact limits
+    Consent-->>Segment: Eligible and excluded records
+    Segment->>Campaign: Send eligible segment and rule version
+    Campaign->>Campaign: Assign approved variant and frequency window
+    Campaign->>Channel: Queue personalized message
+    Channel-->>Campaign: Delivery, bounce, or failure event
+    Campaign->>CRM: Apply opt-out or suppression immediately
+    Commerce-->>Campaign: Publish qualifying purchase event
+    Campaign->>Campaign: Stop journey for purchase or opt-out
+    Campaign->>Analytics: Send exposure, response, and redemption events
+    Analytics->>Analytics: Compare outcome with holdout or baseline
 ```
 
 ## 7. Business rules
@@ -132,18 +136,25 @@ The following is a lifecycle scaffold. Rename, add, or remove states to reflect 
 
 ```mermaid
 stateDiagram-v2
-    [*] --> REQUESTED
-    REQUESTED --> VALIDATING
-    VALIDATING --> IN_PROGRESS: Valid
-    VALIDATING --> REJECTED: Invalid
-    IN_PROGRESS --> AWAITING_REVIEW: Exception or approval required
-    AWAITING_REVIEW --> IN_PROGRESS: Approved / retry permitted
-    AWAITING_REVIEW --> REJECTED: Declined
-    IN_PROGRESS --> COMPLETED: Success conditions met
-    REQUESTED --> CANCELLED: Authorized cancellation
-    COMPLETED --> [*]
-    REJECTED --> [*]
-    CANCELLED --> [*]
+    [*] --> CANDIDATE
+    CANDIDATE --> ELIGIBILITY_CHECK
+    ELIGIBILITY_CHECK --> SUPPRESSED: No consent, invalid, or contact cap reached
+    ELIGIBILITY_CHECK --> SEGMENTED: Eligible
+    SEGMENTED --> MESSAGE_QUEUED
+    MESSAGE_QUEUED --> SENT
+    MESSAGE_QUEUED --> DELIVERY_FAILED
+    SENT --> ENGAGED: Click or response
+    SENT --> REACTIVATED: Qualifying purchase
+    ENGAGED --> REACTIVATED: Qualifying purchase
+    SENT --> OPTED_OUT: Customer opts out
+    ENGAGED --> OPTED_OUT: Customer opts out
+    SENT --> EXPIRED: Journey window ends
+    ENGAGED --> EXPIRED: Journey window ends
+    REACTIVATED --> [*]
+    OPTED_OUT --> [*]
+    SUPPRESSED --> [*]
+    DELIVERY_FAILED --> [*]
+    EXPIRED --> [*]
 ```
 
 ## 10. Exceptions and recovery
