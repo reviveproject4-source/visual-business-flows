@@ -1,32 +1,205 @@
-# Dead-Stock Identification & Progressive Discount Liquidation Flow
+# Slow-Moving and Obsolete Inventory Review
 
-> **Domain:** Retail Merchandising, Fashion / Apparel, Seasonal FMCG  
-> **Key Objective:** Detect slow-moving inventory before it turns into dead loss and execute progressive markdown pricing.
+> **Domain:** Retail merchandising, inventory planning, finance  
+> **Document type:** To-Be reference workflow  
+> **Status:** Reference design — validate with process owners before implementation  
+> **Audience:** Business Analysts, Systems Analysts, product teams, and developers
 
----
+## 1. Problem statement
 
-## 1. Process Flowchart
+Slow-moving goods tie up working capital and may become obsolete or expire. Arbitrary markdowns can destroy margin, while write-offs without evidence can conceal shrinkage.
+
+## 2. Objective and scope
+
+**Objective:** Identify inventory requiring review, evaluate disposition options using cost and demand context, and approve markdown, transfer, return, donation, or write-off actions.
+
+**In scope**
+- Operational lifecycle from initiation through resolution and recordkeeping.
+- Business decisions, system responsibilities, exception handling, and audit evidence.
+- Minimum data and acceptance criteria needed for implementation planning.
+
+**Out of scope**
+- Organization-specific legal, tax, accounting, labor, or contractual conclusions.
+- Fixed thresholds, fees, SLA targets, or financial outcomes not validated by the organization.
+- Vendor-specific API contracts unless documented by the selected provider.
+
+## 3. Actors and systems
+
+| Actor / system | Responsibility |
+|---|---|
+| Inventory analyst | Identifies slow-moving or aging stock |
+| Merchandising manager | Evaluates demand, pricing, and assortment |
+| Store/warehouse operator | Verifies physical quantity and condition |
+| Finance | Reviews margin, valuation, and write-off impact |
+| Approver | Authorizes disposition within delegated authority |
+
+## 4. Trigger, preconditions, and postconditions
+
+**Trigger:** A valid business event or authorized user action initiates the workflow.
+
+**Preconditions**
+- Initiating actor or service is authenticated.
+- Required master data, policy versions, and reference records are available.
+- Requested object is in a state that permits the operation.
+- Required permissions and segregation-of-duty controls are configured.
+
+**Postconditions**
+- Business object has an explicit final or pending status.
+- Material decisions, external references, and exceptions are traceable.
+- Related financial, inventory, customer, or access records are synchronized or visibly pending.
+
+## 5. Business process view
+
+This flow describes the human and organizational process, independent of a specific application architecture.
 
 ```mermaid
 flowchart TD
-    MonthlyAudit[Monthly Stock Velocity Audit] --> VelocityCheck{Days Since Last Sale}
-
-    VelocityCheck -->|< 30 Days| FastMoving[Fast / Normal Velocity: Maintain Full Price]
-    VelocityCheck -->|31 - 60 Days| SlowMoving[Slow Moving: Flag for Store Floor Relocation]
-    VelocityCheck -->|61 - 90 Days| AtRiskStock[At-Risk Dead Stock: Apply Tier 1 Markdown -20%]
-    VelocityCheck -->|> 90 Days| TrueDeadStock[Confirmed Dead Stock: Urgent Liquidation Required]
-
-    SlowMoving --> EndCapDisplay[Move to High-Traffic Cashier End-Cap Shelf]
-    AtRiskStock --> PromoTag[Affix Yellow Discount Tag in POS System]
-
-    TrueDeadStock --> LiquidationStrategy{Select Liquidation Strategy}
-    LiquidationStrategy -->|Option A: Flash Sale| StepDown50[Markdown 50% Off / Clearance Rack]
-    LiquidationStrategy -->|Option B: Bundle Deal| Bundle[Bundle as 'Buy 2 Get 1 Free' with Best-Sellers]
-    LiquidationStrategy -->|Option C: B2B Wholesaler| BulkOffload[Sell to Bulk Liquidator at Cost Basis]
-
-    StepDown50 --> SoldCheck{Sold within 30 days?}
-    Bundle --> SoldCheck
-    
-    SoldCheck -->|Yes| RevenueRecovered[(Working Capital Restored to Cash Flow)]
-    SoldCheck -->|No| WriteOff[Final Accounting Write-off & Donate to Charity]
+    Start([Trigger]) --> S1
+    S1[Calculate stock age and sales velocity using agreed definitions]
+    S2[Flag SKUs or lots for review]
+    S3[Validate system quantity with cycle count where risk warrants]
+    S4[Assess expiry, condition, seasonality, demand, and replenishment status]
+    S5[Compare transfer, markdown, supplier return, bundle, donation, or write-off options]
+    S6[Model margin and financial impact]
+    S7[Obtain approval for selected action]
+    S8[Execute price or inventory movement with effective date and scope]
+    S9[Monitor sell-through and residual stock]
+    S10[Close review with realized outcome and audit evidence]
+    S1 --> S2
+    S2 --> S3
+    S3 --> S4
+    S4 --> S5
+    S5 --> S6
+    S6 --> S7
+    S7 --> S8
+    S8 --> S9
+    S9 --> S10
+    S10 --> End([Outcome])
 ```
+
+## 6. System interaction view
+
+This logical sequence shows system responsibilities. Adapt participants and messages to the selected architecture and provider contract.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as Business actor
+    participant App as Business application
+    participant Core as Domain service
+    participant External as External system
+    participant Audit as Audit/event store
+    User->>App: Submit request or business event
+    App->>Core: Validate identity, scope, and business rules
+    Core->>Core: Evaluate state and authorization
+    Core->>Audit: Persist decision and correlation reference
+    Core->>External: Send authorized request when required
+    External-->>Core: Return result or asynchronous event
+    Core->>Core: Validate response and apply allowed transition
+    Core->>Audit: Record outcome and processing status
+    Core-->>App: Return current status and next action
+    App-->>User: Show outcome or actionable exception
+```
+
+## 7. Business rules
+
+| ID | Rule |
+|---|---|
+| BR-001 | Aging thresholds are category-specific and reflect shelf life, seasonality, and sales cadence. |
+| BR-002 | System quantity must be validated before material write-off or liquidation. |
+| BR-003 | Markdown authority and minimum margin floors must be configured and approved. |
+| BR-004 | Price changes are effective-dated and synchronized to selling channels. |
+| BR-005 | Expired, recalled, damaged, or regulated goods follow mandatory disposal/return rules, not ordinary markdown. |
+| BR-006 | Write-off requires reason, evidence, inventory movement, and finance approval. |
+| BR-007 | Supplier return or transfer must have a confirmed receiving party and movement reference. |
+| BR-008 | Campaign performance is measured against baseline margin and recovery value. |
+
+Policy-dependent rules must be confirmed by the process owner and recorded with an effective date or version before implementation.
+
+## 8. Data requirements
+
+| Entity | Minimum fields |
+|---|---|
+| AgingSnapshot | sku, location, quantity, last_sale_at, days_on_hand, snapshot_at |
+| DispositionCase | case_id, sku, quantity, reason, status, owner |
+| OptionAnalysis | option, expected_recovery, margin_impact, cost, assumptions |
+| Approval | approver_id, authority, decision, approved_qty, effective_at |
+| PriceChange | sku, old_price, new_price, channels, starts_at, ends_at |
+| StockMovement | sku, quantity, from_status, to_status, reason, reference |
+
+Use stable identifiers, explicit timestamps/time zones, currency and unit definitions where relevant, and versioned policy/rule references. Financial values must use integer minor units or fixed-precision decimal types, not binary floating-point arithmetic.
+
+## 9. State model
+
+The following is a lifecycle scaffold. Rename, add, or remove states to reflect the domain and define permitted transitions in the implementation specification.
+
+```mermaid
+stateDiagram-v2
+    [*] --> REQUESTED
+    REQUESTED --> VALIDATING
+    VALIDATING --> IN_PROGRESS: Valid
+    VALIDATING --> REJECTED: Invalid
+    IN_PROGRESS --> AWAITING_REVIEW: Exception or approval required
+    AWAITING_REVIEW --> IN_PROGRESS: Approved / retry permitted
+    AWAITING_REVIEW --> REJECTED: Declined
+    IN_PROGRESS --> COMPLETED: Success conditions met
+    REQUESTED --> CANCELLED: Authorized cancellation
+    COMPLETED --> [*]
+    REJECTED --> [*]
+    CANCELLED --> [*]
+```
+
+## 10. Exceptions and recovery
+
+| Scenario | Expected behavior and recovery |
+|---|---|
+| Stock record differs from physical count | Pause disposition and investigate variance before financial write-off. |
+| Item expired or recalled | Block sale and follow regulated disposal/return procedure. |
+| Markdown breaches margin floor | Require higher approval or choose another disposition. |
+| Channel price synchronization fails | Pause campaign or restrict sales until price consistency is restored. |
+| Supplier refuses return | Reassess alternate approved disposition and document decision. |
+| Stock sells during approval | Recalculate remaining quantity and avoid over-disposition. |
+
+Every retryable action should define idempotency, retry limits, backoff, timeout, and manual escalation. Never treat an unknown external result as success.
+
+## 11. Authorization, privacy, and audit
+
+- Enforce permissions on the server/service boundary; hiding a button is not authorization.
+- Apply least privilege and separation of duties for sensitive approvals, financial actions, inventory adjustments, or account changes.
+- Record actor/service identity, timestamp, object ID, action, prior and new state, reason, correlation ID, and external reference where applicable.
+- Protect personal and commercially sensitive data through purpose limitation, access control, retention, and secure evidence storage.
+- Preserve history through append-only events or controlled reversals; do not silently overwrite material decisions.
+
+## 12. Acceptance criteria
+
+- **AC-01:** Given an item is flagged for liquidation, when material write-off is proposed, then physical quantity validation and finance approval are required.
+- **AC-02:** Given a markdown breaches configured margin authority, when approval is requested, then it routes to a higher approver or is rejected.
+- **AC-03:** Given a lot is expired or recalled, when disposition is evaluated, then sale markdown is blocked.
+- **AC-04:** Given stock quantity changes during approval, when execution begins, then approved quantity is revalidated.
+
+## 13. Operational metrics
+
+- Aged inventory value by bucket
+- Sell-through after disposition action
+- Net recovery versus carrying cost
+- Markdown gross-margin impact
+- Write-off value and reason-code trend
+
+Define numerator, denominator, source system, measurement window, owner, and baseline before setting targets. Metrics are measurement proposals, not promised improvements.
+
+## 14. Assumptions and open decisions
+
+- Aging windows, margin floors, recovery assumptions, and write-off limits are business-specific.
+- Accounting valuation and tax treatment require finance review.
+- Confirm role names, authority limits, thresholds, timeouts, retention, and escalation ownership with stakeholders.
+- Record unresolved decisions explicitly; do not silently convert assumptions into requirements.
+
+## 15. Traceability
+
+| Rule group | Acceptance criteria | Implementation evidence |
+|---|---|---|
+| BR-001 to BR-008 | AC-01 to AC-04 | Unit/integration tests, audit events, and process-owner sign-off |
+
+---
+
+**Validation note:** This is a reusable reference pattern, not an approved policy for every organization. Confirm assumptions and provider-specific behavior before implementation.
