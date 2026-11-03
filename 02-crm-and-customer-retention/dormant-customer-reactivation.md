@@ -191,6 +191,9 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - **AC-02:** Given a customer purchases before a queued message is sent, when the event is processed, then the pending message is cancelled.
 - **AC-03:** Given a journey step is retried, when submitted twice, then only one logical message is created.
 - **AC-04:** Given an offer token is expired or already redeemed, when checkout validates it, then redemption is rejected.
+- **AC-05:** Given campaign eligibility is evaluated, when dormancy is calculated, then the configured category-specific inactivity threshold and qualifying-activity definition are applied.
+- **AC-06:** Given campaign reporting is generated, when outcomes are attributed, then delivery, click, redemption, and incremental outcomes are reported as separate measures.
+- **AC-07:** Given an audience rule uses a sensitive customer attribute, when approval is absent, then the attribute is not inferred or used for targeting.
 
 ## 13. Operational metrics
 
@@ -216,9 +219,15 @@ Assign a named metric owner, reporting window, and baseline before setting a tar
 
 ## 15. Traceability
 
-| Rule group | Acceptance criteria | Implementation evidence |
+| Business rule | Acceptance criterion | Verification focus |
 |---|---|---|
-| BR-001 to BR-007 | AC-01 to AC-04 | Unit/integration tests, audit events, and process-owner sign-off |
+| BR-001 | AC-05 | Requirement and test coverage for the rule |
+| BR-002 | AC-01 | Requirement and test coverage for the rule |
+| BR-003 | AC-03 | Requirement and test coverage for the rule |
+| BR-004 | AC-04 | Requirement and test coverage for the rule |
+| BR-005 | AC-02 | Requirement and test coverage for the rule |
+| BR-006 | AC-06 | Requirement and test coverage for the rule |
+| BR-007 | AC-07 | Requirement and test coverage for the rule |
 
 ---
 
