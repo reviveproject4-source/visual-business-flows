@@ -78,7 +78,7 @@ flowchart TD
 
 ## 6. System interaction view
 
-This logical sequence shows system responsibilities. Adapt participants and messages to the selected architecture and provider contract.
+The sequence models browser authorization initiation, Google callback, state/PKCE and ID-token validation, identity/tenant resolution, and secure session issuance.
 
 ```mermaid
 sequenceDiagram
