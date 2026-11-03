@@ -189,6 +189,9 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - **AC-02:** Given the same purchase event is received twice, when points are calculated, then only one earning entry exists.
 - **AC-03:** Given an eligible purchase is refunded, when the refund event is processed, then a linked compensating points entry is posted.
 - **AC-04:** Given a tier rule changes, when a member is evaluated, then the applicable rule version and period are recorded.
+- **AC-05:** Given enrollment is submitted, when consent is missing or the terms version is not recorded, then enrollment does not become active.
+- **AC-06:** Given a benefit is redeemed, when member status, exclusions, or expiry make it ineligible, then redemption is rejected.
+- **AC-07:** Given a staff member requests a manual points-balance change, when authorized approval and reason are absent, then the change is blocked.
 
 ## 13. Operational metrics
 
@@ -214,9 +217,15 @@ Assign a named metric owner, reporting window, and baseline before setting a tar
 
 ## 15. Traceability
 
-| Rule group | Acceptance criteria | Implementation evidence |
+| Business rule | Acceptance criterion | Verification focus |
 |---|---|---|
-| BR-001 to BR-007 | AC-01 to AC-04 | Unit/integration tests, audit events, and process-owner sign-off |
+| BR-001 | AC-05 | Requirement and test coverage for the rule |
+| BR-002 | AC-01 | Requirement and test coverage for the rule |
+| BR-003 | AC-02 | Requirement and test coverage for the rule |
+| BR-004 | AC-03 | Requirement and test coverage for the rule |
+| BR-005 | AC-04 | Requirement and test coverage for the rule |
+| BR-006 | AC-06 | Requirement and test coverage for the rule |
+| BR-007 | AC-07 | Requirement and test coverage for the rule |
 
 ---
 
