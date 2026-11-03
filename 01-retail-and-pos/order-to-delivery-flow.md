@@ -68,7 +68,7 @@ flowchart TD
     E -->|Yes| J[Authorize payment]
     I --> J
     J --> K{Payment confirmed?}
-    K -->|No| L[Keep unpaid or cancel; release reservation]
+    K -->|No| L[Keep unpaid or cancel, release reservation]
     K -->|Yes| M[Pick, verify, pack, and label]
     M --> N{Picking discrepancy?}
     N -->|Yes| O[Resolve shortage or obtain customer decision]
