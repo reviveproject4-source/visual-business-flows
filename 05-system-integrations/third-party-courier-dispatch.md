@@ -54,25 +54,26 @@ This flow describes the human and organizational process, independent of a speci
 
 ```mermaid
 flowchart TD
-    Start([Trigger]) --> S1
-    S1[Validate package, pickup, drop-off, serviceability, and delivery window]
-    S2[Create booking request with merchant shipment reference and idempotency key]
-    S3[Receive booking ID and estimated service details]
-    S4[Process driver assignment and notify pickup location]
-    S5[Verify driver identity and package handover at pickup]
-    S6[Track courier status updates and exceptions]
-    S7[Capture delivery proof using provider-supported method]
-    S8[Reconcile final courier status to merchant shipment and order]
-    S9[Handle failed delivery, cancellation, return, or claim]
-    S1 --> S2
-    S2 --> S3
-    S3 --> S4
-    S4 --> S5
-    S5 --> S6
-    S6 --> S7
-    S7 --> S8
-    S8 --> S9
-    S9 --> End([Outcome])
+    A([Shipment ready for dispatch]) --> B[Validate package, address, serviceability, and delivery window]
+    B --> C{Shipment data valid?}
+    C -->|No| X[Return validation error]
+    C -->|Yes| D[Create booking with idempotency reference]
+    D --> E{Provider confirms booking?}
+    E -->|No or timeout| F[Check provider status before safe retry]
+    F --> D
+    E -->|Yes| G[Record booking and expected milestones]
+    G --> H[Verify driver and package at pickup]
+    H --> I{Handover valid?}
+    I -->|No| J[Raise pickup exception or reassign]
+    J --> H
+    I -->|Yes| K[Track courier events and custody]
+    K --> L{Delivered with valid proof?}
+    L -->|Yes| M[Reconcile delivered status to order]
+    L -->|No| N{Redelivery or return authorized?}
+    N -->|Redelivery| K
+    N -->|Return| O[Record return and reconcile inventory]
+    M --> P([Close shipment])
+    O --> P
 ```
 
 ## 6. System interaction view
