@@ -55,25 +55,25 @@ This flow describes the human and organizational process, independent of a speci
 
 ```mermaid
 flowchart TD
-    Start([Trigger]) --> S1
-    S1[Identify delivery and locate authorized PO]
-    S2[Verify supplier, shipment, SKU, lot, and expected quantities]
-    S3[Unload into receiving or inspection area]
-    S4[Count physical units and record discrepancy by line]
-    S5[Inspect quality, damage, expiry, and required certificates]
-    S6[Accept, quarantine, reject, or partially accept quantities]
-    S7[Post accepted quantity to correct stock status and location]
-    S8[Create supplier claim or PO discrepancy case]
-    S9[Reconcile receipt against PO and invoice]
-    S1 --> S2
-    S2 --> S3
-    S3 --> S4
-    S4 --> S5
-    S5 --> S6
-    S6 --> S7
-    S7 --> S8
-    S8 --> S9
-    S9 --> End([Outcome])
+    A([Supplier shipment arrives]) --> B[Register delivery and locate authorized PO]
+    B --> C{Valid open PO and supplier?}
+    C -->|No| X[Hold shipment and escalate mismatch]
+    C -->|Yes| D[Count physical units by SKU/lot]
+    D --> E[Inspect quality, damage, expiry, and certificates]
+    E --> F{All units conform?}
+    F -->|Yes| G[Accept received quantity]
+    F -->|Mixed| H[Split accepted, quarantined, and rejected quantities]
+    F -->|No| I[Quarantine or reject shipment]
+    G --> J[Post accepted units to available stock]
+    H --> K[Post accepted units and quarantine remainder]
+    I --> L[Raise supplier claim and update PO discrepancy]
+    K --> L
+    J --> M[Match receipt to PO and invoice]
+    L --> M
+    M --> N{Quantity and invoice reconciled?}
+    N -->|No| O[Keep discrepancy open for resolution]
+    N -->|Yes| P([Close receipt with audit evidence])
+    O --> P
 ```
 
 ## 6. System interaction view
