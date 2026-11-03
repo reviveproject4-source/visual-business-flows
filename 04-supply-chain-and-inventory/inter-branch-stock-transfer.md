@@ -191,6 +191,7 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - **AC-02:** Given destination receives fewer units than dispatched, when receipt is posted, then actual units enter destination stock and difference remains an open discrepancy.
 - **AC-03:** Given a seal is reported damaged, when receipt is recorded, then evidence and witnessed inspection are required before closure.
 - **AC-04:** Given a variance is unresolved, when adjustment is requested, then automatic liability assignment is prohibited and authorized review is required.
+- **AC-05:** Given a transfer request is created, when it is accepted, then a unique transfer ID, source, destination, and approved line quantities are stored.
 
 ## 13. Operational metrics
 
@@ -216,9 +217,16 @@ Assign a named metric owner, reporting window, and baseline before setting a tar
 
 ## 15. Traceability
 
-| Rule group | Acceptance criteria | Implementation evidence |
+| Business rule | Acceptance criterion | Verification focus |
 |---|---|---|
-| BR-001 to BR-008 | AC-01 to AC-04 | Unit/integration tests, audit events, and process-owner sign-off |
+| BR-001 | AC-05 | Requirement and test coverage for the rule |
+| BR-002 | AC-01 | Requirement and test coverage for the rule |
+| BR-003 | AC-03 | Requirement and test coverage for the rule |
+| BR-004 | AC-03 | Requirement and test coverage for the rule |
+| BR-005 | AC-02 | Requirement and test coverage for the rule |
+| BR-006 | AC-02 | Requirement and test coverage for the rule |
+| BR-007 | AC-04 | Requirement and test coverage for the rule |
+| BR-008 | AC-04 | Requirement and test coverage for the rule |
 
 ---
 
