@@ -209,7 +209,12 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - Session revocation and refresh replay events
 - Sign-in latency and provider availability
 
-Define numerator, denominator, source system, measurement window, owner, and baseline before setting targets. Metrics are measurement proposals, not promised improvements.
+- **Authentication completion rate:** successful authenticated sessions ÷ valid sign-in starts.
+- **Callback rejection rate:** rejected callbacks ÷ received callbacks, segmented by state, code, and token validation reason.
+- **Account-linking incident count:** confirmed incorrect or disputed identity-link events per reporting period.
+- **Sign-in latency:** session-issued timestamp minus sign-in-start timestamp; report median and P95. Review security events continuously.
+
+Assign a named metric owner, reporting window, and baseline before setting a target. These are measurement definitions, not promised improvements.
 
 ## 14. Assumptions and open decisions
 
