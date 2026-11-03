@@ -7,6 +7,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 MMD = ROOT / "node_modules" / ".bin" / "mmdc"
+PUPPETEER_CONFIG = ROOT / ".github" / "puppeteer-config.json"
 FENCE = chr(96) * 3
 
 def extract_blocks(path):
@@ -46,7 +47,7 @@ def main():
                 output_file = temp_dir / f"diagram-{total}.svg"
                 source_file.write_text(source, encoding="utf-8")
                 result = subprocess.run(
-                    [str(MMD), "--input", str(source_file), "--output", str(output_file), "--quiet"],
+                    [str(MMD), "--input", str(source_file), "--output", str(output_file), "--quiet", "--puppeteerConfigFile", str(PUPPETEER_CONFIG)],
                     text=True, capture_output=True
                 )
                 if result.returncode != 0 or not output_file.exists():
