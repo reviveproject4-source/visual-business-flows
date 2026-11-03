@@ -35,13 +35,14 @@ Courier assignment and tracking are external dependencies. Repeated booking requ
 
 ## 4. Trigger, preconditions, and postconditions
 
-**Trigger:** A valid business event or authorized user action initiates the workflow.
+**Trigger:** An order is packed and marked ready for shipment, and the merchant requests a courier booking.
 
 **Preconditions**
-- Initiating actor or service is authenticated.
-- Required master data, policy versions, and reference records are available.
-- Requested object is in a state that permits the operation.
-- Required permissions and segregation-of-duty controls are configured.
+- Order, package dimensions/weight, pickup address, delivery address, and recipient contact are validated.
+- Carrier serviceability, service level, quoted cost, and delivery constraints are available.
+- Merchant reference and booking idempotency key are generated before provider submission.
+- Pickup custody verification and proof-of-delivery requirements are defined.
+- Cancellation, redelivery, return-to-origin, and provider outage procedures are configured.
 
 **Postconditions**
 - Business object has an explicit final or pending status.
@@ -137,7 +138,7 @@ Use stable identifiers, explicit timestamps/time zones, currency and unit defini
 
 ## 9. State model
 
-The following is a lifecycle scaffold. Rename, add, or remove states to reflect the domain and define permitted transitions in the implementation specification.
+The state names and transitions below describe the proposed lifecycle for this workflow. Confirm guards, role permissions, timeout transitions, and terminal-state behavior with the process owner and implementation team before production use.
 
 ```mermaid
 stateDiagram-v2
