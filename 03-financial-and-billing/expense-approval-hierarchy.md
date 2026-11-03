@@ -204,7 +204,12 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - Budget variance by cost center
 - Payment rejection and overdue payable rate
 
-Define numerator, denominator, source system, measurement window, owner, and baseline before setting targets. Metrics are measurement proposals, not promised improvements.
+- **Approval cycle time:** final decision timestamp minus submission timestamp; report median and P90 by approval path.
+- **Policy exception rate:** requests approved with documented policy exception ÷ submitted requests.
+- **Budget variance:** actual approved spend minus budget allocation, shown by cost center and period.
+- **Rework rate:** requests returned for missing/incorrect information ÷ submitted requests. Review monthly with budget owners.
+
+Assign a named metric owner, reporting window, and baseline before setting a target. These are measurement definitions, not promised improvements.
 
 ## 14. Assumptions and open decisions
 
