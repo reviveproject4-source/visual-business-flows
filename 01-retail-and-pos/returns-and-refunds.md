@@ -35,13 +35,14 @@ Returns affect customer experience, inventory valuation, and cash. Weak controls
 
 ## 4. Trigger, preconditions, and postconditions
 
-**Trigger:** A valid business event or authorized user action initiates the workflow.
+**Trigger:** A customer or authorized service agent submits a return, exchange, or refund request against an identifiable order item.
 
 **Preconditions**
-- Initiating actor or service is authenticated.
-- Required master data, policy versions, and reference records are available.
-- Requested object is in a state that permits the operation.
-- Required permissions and segregation-of-duty controls are configured.
+- The original order, payment, and item-level fulfillment record can be retrieved.
+- The return window, eligible item conditions, exclusions, and refund method are configured as policy inputs.
+- The requester and receiving location/agent are identified.
+- Refund authority limits and inspection/disposition roles are defined.
+- Payment-provider reversal or refund references can be recorded.
 
 **Postconditions**
 - Business object has an explicit final or pending status.
@@ -142,7 +143,7 @@ Use stable identifiers, explicit timestamps/time zones, currency and unit defini
 
 ## 9. State model
 
-The following is a lifecycle scaffold. Rename, add, or remove states to reflect the domain and define permitted transitions in the implementation specification.
+The state names and transitions below describe the proposed lifecycle for this workflow. Confirm guards, role permissions, timeout transitions, and terminal-state behavior with the process owner and implementation team before production use.
 
 ```mermaid
 stateDiagram-v2
