@@ -78,7 +78,7 @@ flowchart TD
 
 ## 6. System interaction view
 
-This logical sequence shows system responsibilities. Adapt participants and messages to the selected architecture and provider contract.
+The sequence models complaint intake, ticket deduplication, severity/SLA calculation, ownership routing, escalation, compensation authorization, closure communication, and reopen handling.
 
 ```mermaid
 sequenceDiagram
