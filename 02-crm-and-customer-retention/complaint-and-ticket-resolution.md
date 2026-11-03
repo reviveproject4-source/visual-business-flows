@@ -185,6 +185,9 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - **AC-02:** Given an SLA approaches breach, when the warning threshold is reached, then the owner and escalation role are notified.
 - **AC-03:** Given compensation exceeds agent authority, when submitted, then issuance is blocked pending approval.
 - **AC-04:** Given a customer disputes a closed ticket within the reopen window, when the reply is ingested, then the ticket reopens or a linked follow-up is created.
+- **AC-05:** Given an escalation changes the responsible team, when ownership transfers, then prior investigation history and timestamps remain linked to the ticket.
+- **AC-06:** Given a ticket is closed, when closure is attempted, then a resolution code and customer communication record are required.
+- **AC-07:** Given a ticket contains sensitive attachments, when a user without access attempts retrieval, then access is denied and the event is auditable.
 
 ## 13. Operational metrics
 
@@ -210,9 +213,16 @@ Assign a named metric owner, reporting window, and baseline before setting a tar
 
 ## 15. Traceability
 
-| Rule group | Acceptance criteria | Implementation evidence |
+| Business rule | Acceptance criterion | Verification focus |
 |---|---|---|
-| BR-001 to BR-008 | AC-01 to AC-04 | Unit/integration tests, audit events, and process-owner sign-off |
+| BR-001 | AC-01 | Requirement and test coverage for the rule |
+| BR-002 | AC-02 | Requirement and test coverage for the rule |
+| BR-003 | AC-02 | Requirement and test coverage for the rule |
+| BR-004 | AC-03 | Requirement and test coverage for the rule |
+| BR-005 | AC-05 | Requirement and test coverage for the rule |
+| BR-006 | AC-06 | Requirement and test coverage for the rule |
+| BR-007 | AC-04 | Requirement and test coverage for the rule |
+| BR-008 | AC-07 | Requirement and test coverage for the rule |
 
 ---
 
