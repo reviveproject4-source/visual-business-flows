@@ -84,7 +84,7 @@ flowchart TD
 
 ## 6. System interaction view
 
-This logical sequence shows system responsibilities. Adapt participants and messages to the selected architecture and provider contract.
+The sequence models customer segmentation, consent/suppression checks, campaign scheduling, channel delivery, interaction events, and suppression after purchase or opt-out.
 
 ```mermaid
 sequenceDiagram
