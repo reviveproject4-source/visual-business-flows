@@ -79,7 +79,7 @@ flowchart TD
 
 ## 6. System interaction view
 
-This logical sequence shows system responsibilities. Adapt participants and messages to the selected architecture and provider contract.
+The sequence models inbound reference validation, physical receiving, quantity/quality inspection, quarantine or acceptance, inventory posting, and purchase-order/invoice matching.
 
 ```mermaid
 sequenceDiagram
