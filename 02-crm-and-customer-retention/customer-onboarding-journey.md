@@ -35,13 +35,14 @@ Loyalty enrollment and reward balances become inconsistent when identity matchin
 
 ## 4. Trigger, preconditions, and postconditions
 
-**Trigger:** A valid business event or authorized user action initiates the workflow.
+**Trigger:** A prospective customer submits a registration/enrollment request or accepts an authorized invitation.
 
 **Preconditions**
-- Initiating actor or service is authenticated.
-- Required master data, policy versions, and reference records are available.
-- Requested object is in a state that permits the operation.
-- Required permissions and segregation-of-duty controls are configured.
+- Required identity and contact fields, consent text, and terms version are available.
+- Duplicate detection keys and manual-review rules are defined.
+- Signup, invitation, and tenant/account eligibility policies are configured.
+- Verification channels and expiry rules are available.
+- Default role and access scope follow least-privilege policy.
 
 **Postconditions**
 - Business object has an explicit final or pending status.
@@ -138,7 +139,7 @@ Use stable identifiers, explicit timestamps/time zones, currency and unit defini
 
 ## 9. State model
 
-The following is a lifecycle scaffold. Rename, add, or remove states to reflect the domain and define permitted transitions in the implementation specification.
+The state names and transitions below describe the proposed lifecycle for this workflow. Confirm guards, role permissions, timeout transitions, and terminal-state behavior with the process owner and implementation team before production use.
 
 ```mermaid
 stateDiagram-v2
