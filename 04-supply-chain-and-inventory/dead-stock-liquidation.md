@@ -35,13 +35,14 @@ Slow-moving goods tie up working capital and may become obsolete or expire. Arbi
 
 ## 4. Trigger, preconditions, and postconditions
 
-**Trigger:** A valid business event or authorized user action initiates the workflow.
+**Trigger:** A scheduled inventory review identifies stock meeting a configured aging, inactivity, expiry-risk, or turnover criterion.
 
 **Preconditions**
-- Initiating actor or service is authenticated.
-- Required master data, policy versions, and reference records are available.
-- Requested object is in a state that permits the operation.
-- Required permissions and segregation-of-duty controls are configured.
+- SKU, location, on-hand quantity, cost basis, last movement, expiry/batch, and reservation status are available.
+- Aging and dead-stock criteria are approved, versioned, and differentiated by product category where needed.
+- Stock valuation and markdown/liquidation authority are defined.
+- Quality, recall, expiry, and legal restrictions are checked before disposition.
+- Write-off, transfer, supplier return, discount, and disposal evidence requirements are specified.
 
 **Postconditions**
 - Business object has an explicit final or pending status.
@@ -138,7 +139,7 @@ Use stable identifiers, explicit timestamps/time zones, currency and unit defini
 
 ## 9. State model
 
-The following is a lifecycle scaffold. Rename, add, or remove states to reflect the domain and define permitted transitions in the implementation specification.
+The state names and transitions below describe the proposed lifecycle for this workflow. Confirm guards, role permissions, timeout transitions, and terminal-state behavior with the process owner and implementation team before production use.
 
 ```mermaid
 stateDiagram-v2
