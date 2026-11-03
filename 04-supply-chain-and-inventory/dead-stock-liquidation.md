@@ -196,7 +196,12 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - Markdown gross-margin impact
 - Write-off value and reason-code trend
 
-Define numerator, denominator, source system, measurement window, owner, and baseline before setting targets. Metrics are measurement proposals, not promised improvements.
+- **Aged inventory ratio:** inventory value beyond the approved aging threshold ÷ total inventory value.
+- **Recovery value rate:** net proceeds from liquidation/return ÷ carrying value of disposed stock.
+- **Disposition cycle time:** final disposition timestamp minus review-case creation timestamp.
+- **Write-off rate:** written-off inventory value ÷ average inventory value for the period. Review monthly by category and location.
+
+Assign a named metric owner, reporting window, and baseline before setting a target. These are measurement definitions, not promised improvements.
 
 ## 14. Assumptions and open decisions
 
