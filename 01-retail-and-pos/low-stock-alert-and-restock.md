@@ -35,13 +35,14 @@ Replenishment based only on on-hand quantity can create duplicate purchase order
 
 ## 4. Trigger, preconditions, and postconditions
 
-**Trigger:** A valid business event or authorized user action initiates the workflow.
+**Trigger:** An inventory event or scheduled stock evaluation finds an SKU-location available quantity at or below its configured reorder point.
 
 **Preconditions**
-- Initiating actor or service is authenticated.
-- Required master data, policy versions, and reference records are available.
-- Requested object is in a state that permits the operation.
-- Required permissions and segregation-of-duty controls are configured.
+- SKU, location, unit of measure, and inventory status are valid.
+- On-hand, reserved, damaged, quarantined, and inbound quantities are distinguishable.
+- Reorder point, safety stock, minimum order quantity, and lead time have approved sources or are explicitly marked as assumptions.
+- Supplier/catalog availability and purchasing authority are configured.
+- Duplicate alerts and open purchase orders can be checked before replenishment.
 
 **Postconditions**
 - Business object has an explicit final or pending status.
@@ -142,7 +143,7 @@ Use stable identifiers, explicit timestamps/time zones, currency and unit defini
 
 ## 9. State model
 
-The following is a lifecycle scaffold. Rename, add, or remove states to reflect the domain and define permitted transitions in the implementation specification.
+The state names and transitions below describe the proposed lifecycle for this workflow. Confirm guards, role permissions, timeout transitions, and terminal-state behavior with the process owner and implementation team before production use.
 
 ```mermaid
 stateDiagram-v2
