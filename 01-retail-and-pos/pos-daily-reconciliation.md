@@ -74,11 +74,11 @@ flowchart TD
     G -->|No| I[Preserve initial count and open variance case]
     I --> J[Independent witnessed recount]
     J --> K{Recount explains difference?}
-    K -->|Yes| L[Record recount result and reason; retain both counts]
+    K -->|Yes| L[Record recount result and reason, retain both counts]
     K -->|No| M[Collect supporting evidence and investigate]
     M --> N{Authorized resolution available?}
     N -->|Yes| O[Supervisor approves documented resolution]
-    N -->|No| P[Escalate to manager; keep case unresolved]
+    N -->|No| P[Escalate to manager, keep case unresolved]
     L --> H
     O --> H
     P --> Q[Close shift as exception only if policy permits]
