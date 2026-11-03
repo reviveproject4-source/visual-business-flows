@@ -205,7 +205,12 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - Supplier on-time/in-full delivery
 - Inventory days on hand and excess stock value
 
-Define numerator, denominator, source system, measurement window, owner, and baseline before setting targets. Metrics are measurement proposals, not promised improvements.
+- **Stockout rate:** SKU-location days with available quantity at zero ÷ active SKU-location days.
+- **Alert conversion:** alerts resulting in an approved replenishment action ÷ actionable alerts.
+- **Replenishment lead time:** receipt timestamp minus approved purchase-order timestamp; report median and P90 by supplier.
+- Review weekly; segment by SKU, supplier, and location.
+
+Assign a named metric owner, reporting window, and baseline before setting a target. These are measurement definitions, not promised improvements.
 
 ## 14. Assumptions and open decisions
 
