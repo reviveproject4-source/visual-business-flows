@@ -82,21 +82,30 @@ This logical sequence shows system responsibilities. Adapt participants and mess
 ```mermaid
 sequenceDiagram
     autonumber
-    actor User as Business actor
-    participant App as Business application
-    participant Core as Domain service
-    participant External as External system
-    participant Audit as Audit/event store
-    User->>App: Submit request or business event
-    App->>Core: Validate identity, scope, and business rules
-    Core->>Core: Evaluate state and authorization
-    Core->>Audit: Persist decision and correlation reference
-    Core->>External: Send authorized request when required
-    External-->>Core: Return result or asynchronous event
-    Core->>Core: Validate response and apply allowed transition
-    Core->>Audit: Record outcome and processing status
-    Core-->>App: Return current status and next action
-    App-->>User: Show outcome or actionable exception
+    actor Customer
+    participant Channel as Enrollment Channel
+    participant Membership
+    participant Identity as Identity/Deduplication
+    participant POS
+    participant Ledger as Points Ledger
+    participant Notify as Notification Service
+    Customer->>Channel: Review terms and request enrollment
+    Channel->>Membership: Submit consent and profile data
+    Membership->>Identity: Check existing member and identity attributes
+    Identity-->>Membership: Match, no match, or manual review
+    alt Duplicate or unresolved identity
+        Membership-->>Channel: Link existing account or request review
+    else New eligible member
+        Membership->>Membership: Create member using active program version
+        Membership-->>Channel: Return member identifier
+        POS-->>Membership: Send confirmed eligible purchase event
+        Membership->>Ledger: Calculate and append points transaction
+        Ledger-->>Membership: New balance and ledger reference
+        Membership->>Membership: Evaluate tier using effective rules
+        Membership->>Notify: Send enrollment, balance, or tier notice
+        Membership->>Ledger: Process approved reversal or expiry event
+    end
+    Channel-->>Customer: Show enrollment status
 ```
 
 ## 7. Business rules
@@ -132,18 +141,23 @@ The following is a lifecycle scaffold. Rename, add, or remove states to reflect 
 
 ```mermaid
 stateDiagram-v2
-    [*] --> REQUESTED
-    REQUESTED --> VALIDATING
-    VALIDATING --> IN_PROGRESS: Valid
-    VALIDATING --> REJECTED: Invalid
-    IN_PROGRESS --> AWAITING_REVIEW: Exception or approval required
-    AWAITING_REVIEW --> IN_PROGRESS: Approved / retry permitted
-    AWAITING_REVIEW --> REJECTED: Declined
-    IN_PROGRESS --> COMPLETED: Success conditions met
-    REQUESTED --> CANCELLED: Authorized cancellation
-    COMPLETED --> [*]
-    REJECTED --> [*]
-    CANCELLED --> [*]
+    [*] --> ENROLLMENT_STARTED
+    ENROLLMENT_STARTED --> CONSENT_PENDING
+    CONSENT_PENDING --> IDENTITY_CHECK
+    CONSENT_PENDING --> WITHDRAWN: Consent declined
+    IDENTITY_CHECK --> DUPLICATE_REVIEW: Possible existing member
+    DUPLICATE_REVIEW --> LINKED: Existing account confirmed
+    DUPLICATE_REVIEW --> PROFILE_CREATED: New identity approved
+    IDENTITY_CHECK --> PROFILE_CREATED: No match
+    PROFILE_CREATED --> ACTIVE
+    ACTIVE --> POINTS_UPDATED: Eligible purchase posted
+    POINTS_UPDATED --> ACTIVE
+    ACTIVE --> SUSPENDED: Risk or policy hold
+    SUSPENDED --> ACTIVE: Hold cleared
+    ACTIVE --> CLOSED: Account closure approved
+    LINKED --> ACTIVE
+    WITHDRAWN --> [*]
+    CLOSED --> [*]
 ```
 
 ## 10. Exceptions and recovery
