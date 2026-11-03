@@ -55,27 +55,24 @@ This flow describes the human and organizational process, independent of a speci
 
 ```mermaid
 flowchart TD
-    Start([Trigger]) --> S1
-    S1[User selects identity provider sign-in]
-    S2[Generate state, nonce, and PKCE verifier/challenge]
-    S3[Redirect to provider authorization endpoint using registered redirect URI]
-    S4[Provider authenticates user and returns authorization code]
-    S5[Backend validates state and exchanges code using PKCE]
-    S6[Validate ID token signature, issuer, audience, expiry, nonce, and relevant claims]
-    S7[Resolve provider subject to existing identity mapping]
-    S8[Create account only under approved signup and tenant-invitation policy]
-    S9[Issue secure application session and enforce role/tenant authorization]
-    S10[Rotate, expire, revoke, and audit sessions]
-    S1 --> S2
-    S2 --> S3
-    S3 --> S4
-    S4 --> S5
-    S5 --> S6
-    S6 --> S7
-    S7 --> S8
-    S8 --> S9
-    S9 --> S10
-    S10 --> End([Outcome])
+    A([User selects Google sign-in]) --> B[Create state, nonce, and PKCE challenge]
+    B --> C[Redirect to registered Google authorization endpoint]
+    C --> D{User authenticates and consents?}
+    D -->|No| X[Return denied or cancelled result]
+    D -->|Yes| E[Receive authorization code and state]
+    E --> F[Validate state and exchange code using PKCE]
+    F --> G[Validate token signature, issuer, audience, expiry, and nonce]
+    G --> H{Token valid?}
+    H -->|No| X
+    H -->|Yes| I[Resolve provider subject and tenant mapping]
+    I --> J{Existing identity or authorized invitation?}
+    J -->|No| X
+    J -->|Yes| K[Apply account-linking and role/tenant authorization]
+    K --> L{Authorization passes?}
+    L -->|No| X
+    L -->|Yes| M[Issue secure application session]
+    M --> N[Record authentication outcome without storing tokens in logs]
+    N --> O([Authenticated session established])
 ```
 
 ## 6. System interaction view
