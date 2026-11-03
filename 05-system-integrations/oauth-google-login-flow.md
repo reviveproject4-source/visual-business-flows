@@ -85,21 +85,36 @@ This logical sequence shows system responsibilities. Adapt participants and mess
 ```mermaid
 sequenceDiagram
     autonumber
-    actor User as Business actor
-    participant App as Business application
-    participant Core as Domain service
-    participant External as External system
-    participant Audit as Audit/event store
-    User->>App: Submit request or business event
-    App->>Core: Validate identity, scope, and business rules
-    Core->>Core: Evaluate state and authorization
-    Core->>Audit: Persist decision and correlation reference
-    Core->>External: Send authorized request when required
-    External-->>Core: Return result or asynchronous event
-    Core->>Core: Validate response and apply allowed transition
-    Core->>Audit: Record outcome and processing status
-    Core-->>App: Return current status and next action
-    App-->>User: Show outcome or actionable exception
+    actor User
+    participant Browser
+    participant App as Application Backend
+    participant Google as Google Authorization Server
+    participant Identity as Identity Store
+    participant Session as Session Service
+    participant Audit
+    User->>Browser: Select Google sign-in
+    Browser->>App: Start authorization
+    App->>App: Create state, nonce, PKCE verifier/challenge
+    App-->>Browser: Redirect with state, nonce, challenge, and redirect URI
+    Browser->>Google: Authorization request
+    Google-->>Browser: Return authorization code
+    Browser->>App: Callback with code and state
+    App->>App: Validate state and exchange code using PKCE
+    App->>Google: Token request
+    Google-->>App: ID token and access token
+    App->>App: Validate signature, issuer, audience, expiry, and nonce
+    App->>Identity: Resolve provider subject and tenant invitation policy
+    alt Existing linked identity
+        Identity-->>App: Existing internal user and tenant mapping
+    else New identity allowed
+        Identity->>Identity: Create identity mapping under signup policy
+    else No invitation or signup prohibited
+        Identity-->>App: Deny account creation
+    end
+    App->>Session: Issue secure session after authorization checks
+    Session-->>Browser: Set secure session cookie
+    App->>Audit: Record authentication outcome without tokens
+    Browser-->>User: Show authenticated or denied result
 ```
 
 ## 7. Business rules
@@ -136,18 +151,27 @@ The following is a lifecycle scaffold. Rename, add, or remove states to reflect 
 
 ```mermaid
 stateDiagram-v2
-    [*] --> REQUESTED
-    REQUESTED --> VALIDATING
-    VALIDATING --> IN_PROGRESS: Valid
-    VALIDATING --> REJECTED: Invalid
-    IN_PROGRESS --> AWAITING_REVIEW: Exception or approval required
-    AWAITING_REVIEW --> IN_PROGRESS: Approved / retry permitted
-    AWAITING_REVIEW --> REJECTED: Declined
-    IN_PROGRESS --> COMPLETED: Success conditions met
-    REQUESTED --> CANCELLED: Authorized cancellation
-    COMPLETED --> [*]
-    REJECTED --> [*]
-    CANCELLED --> [*]
+    [*] --> SIGNIN_STARTED
+    SIGNIN_STARTED --> AUTH_REQUEST_CREATED
+    AUTH_REQUEST_CREATED --> PROVIDER_AUTHENTICATION
+    PROVIDER_AUTHENTICATION --> CALLBACK_RECEIVED: Authorization code returned
+    PROVIDER_AUTHENTICATION --> USER_CANCELLED
+    CALLBACK_RECEIVED --> STATE_VALIDATION
+    STATE_VALIDATION --> DENIED: State mismatch or expired
+    STATE_VALIDATION --> CODE_EXCHANGE
+    CODE_EXCHANGE --> TOKEN_VALIDATION
+    TOKEN_VALIDATION --> DENIED: Invalid issuer, audience, signature, or nonce
+    TOKEN_VALIDATION --> IDENTITY_RESOLUTION: Token valid
+    IDENTITY_RESOLUTION --> ACCOUNT_LINKED: Existing mapping
+    IDENTITY_RESOLUTION --> ACCOUNT_CREATED: Signup/invitation policy allows
+    IDENTITY_RESOLUTION --> DENIED: No authorized account mapping
+    ACCOUNT_LINKED --> SESSION_ISSUED
+    ACCOUNT_CREATED --> SESSION_ISSUED
+    SESSION_ISSUED --> AUTHENTICATED
+    AUTHENTICATED --> SESSION_REVOKED: Logout, expiry, or revocation
+    DENIED --> [*]
+    USER_CANCELLED --> [*]
+    SESSION_REVOKED --> [*]
 ```
 
 ## 10. Exceptions and recovery
