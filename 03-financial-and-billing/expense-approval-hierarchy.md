@@ -226,14 +226,14 @@ Assign a named metric owner, reporting window, and baseline before setting a tar
 
 | Business rule | Acceptance criterion | Verification focus |
 |---|---|---|
-| BR-001 | AC-02 | Requirement and test coverage for the rule |
-| BR-002 | AC-01 | Requirement and test coverage for the rule |
-| BR-003 | AC-05 | Requirement and test coverage for the rule |
-| BR-004 | AC-06 | Requirement and test coverage for the rule |
-| BR-005 | AC-07 | Requirement and test coverage for the rule |
-| BR-006 | AC-04 | Requirement and test coverage for the rule |
-| BR-007 | AC-03 | Requirement and test coverage for the rule |
-| BR-008 | AC-08 | Requirement and test coverage for the rule |
+| BR-001 | AC-02 | it moves to a higher authorized approver |
+| BR-002 | AC-01 | self-approval is rejected |
+| BR-003 | AC-05 | related transactions are assessed for split-purchase avoidance |
+| BR-004 | AC-06 | the correct cost center and budget period are used |
+| BR-005 | AC-07 | submission is blocked or routed to exception review |
+| BR-006 | AC-04 | it is blocked for finance review |
+| BR-007 | AC-03 | reapproval is required |
+| BR-008 | AC-08 | both actions reference the approved request and retain audit evidence |
 
 ---
 
