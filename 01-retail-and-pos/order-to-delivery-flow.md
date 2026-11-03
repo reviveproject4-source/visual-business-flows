@@ -214,7 +214,12 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - Delivery success rate and failed-delivery reasons
 - Orders with stale or inconsistent payment/fulfillment states
 
-Define numerator, denominator, source system, measurement window, owner, and baseline before setting targets. Metrics are measurement proposals, not promised improvements.
+- **Order cycle time:** delivered timestamp minus accepted-order timestamp; source: order events; report median and P90 by fulfillment method.
+- **On-time delivery rate:** orders delivered by promised time ÷ delivered orders; source: delivery milestones.
+- **Line fill rate:** fulfilled order lines ÷ requested order lines; source: order and fulfillment records.
+- Review daily for operations; segment by channel, location, and exception reason.
+
+Assign a named metric owner, reporting window, and baseline before setting a target. These are measurement definitions, not promised improvements.
 
 ## 14. Assumptions and open decisions
 
