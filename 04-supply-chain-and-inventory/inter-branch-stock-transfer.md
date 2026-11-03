@@ -87,21 +87,30 @@ This logical sequence shows system responsibilities. Adapt participants and mess
 ```mermaid
 sequenceDiagram
     autonumber
-    actor User as Business actor
-    participant App as Business application
-    participant Core as Domain service
-    participant External as External system
-    participant Audit as Audit/event store
-    User->>App: Submit request or business event
-    App->>Core: Validate identity, scope, and business rules
-    Core->>Core: Evaluate state and authorization
-    Core->>Audit: Persist decision and correlation reference
-    Core->>External: Send authorized request when required
-    External-->>Core: Return result or asynchronous event
-    Core->>Core: Validate response and apply allowed transition
-    Core->>Audit: Record outcome and processing status
-    Core-->>App: Return current status and next action
-    App-->>User: Show outcome or actionable exception
+    actor Source as Source Branch
+    actor Destination as Destination Branch
+    participant Transfer
+    participant Inventory
+    participant Approver
+    participant Carrier
+    participant Audit
+    Source->>Transfer: Request transfer with SKU and quantity
+    Transfer->>Inventory: Check source availability and destination need
+    Inventory-->>Transfer: Available and reserved quantities
+    Transfer->>Approver: Request authorization
+    Approver-->>Transfer: Approve or reject
+    alt Rejected
+        Transfer-->>Source: Return rejection reason
+    else Approved
+        Transfer->>Inventory: Reserve and pick approved quantity
+        Source->>Transfer: Confirm independent count and package seal
+        Transfer->>Carrier: Handover shipment and custody evidence
+        Carrier-->>Destination: Deliver shipment
+        Destination->>Transfer: Record seal condition and blind receipt count
+        Transfer->>Inventory: Move accepted units to destination and discrepancies to investigation
+        Transfer->>Audit: Record dispatch, custody, receipt, and variance
+        Transfer-->>Source: Return transfer reconciliation status
+    end
 ```
 
 ## 7. Business rules
@@ -140,17 +149,21 @@ The following is a lifecycle scaffold. Rename, add, or remove states to reflect 
 ```mermaid
 stateDiagram-v2
     [*] --> REQUESTED
-    REQUESTED --> VALIDATING
-    VALIDATING --> IN_PROGRESS: Valid
-    VALIDATING --> REJECTED: Invalid
-    IN_PROGRESS --> AWAITING_REVIEW: Exception or approval required
-    AWAITING_REVIEW --> IN_PROGRESS: Approved / retry permitted
-    AWAITING_REVIEW --> REJECTED: Declined
-    IN_PROGRESS --> COMPLETED: Success conditions met
-    REQUESTED --> CANCELLED: Authorized cancellation
-    COMPLETED --> [*]
+    REQUESTED --> STOCK_CHECK
+    STOCK_CHECK --> REJECTED: Insufficient stock or invalid destination
+    STOCK_CHECK --> APPROVAL_PENDING: Feasible
+    APPROVAL_PENDING --> REJECTED: Declined
+    APPROVAL_PENDING --> PICKING: Approved
+    PICKING --> DISPATCH_READY: Count and seal verified
+    DISPATCH_READY --> IN_TRANSIT: Custody accepted
+    IN_TRANSIT --> RECEIVING: Shipment arrives
+    RECEIVING --> RECEIVED: Quantity matches
+    RECEIVING --> VARIANCE_REVIEW: Shortage, excess, or damage
+    VARIANCE_REVIEW --> PARTIALLY_RECEIVED: Accepted quantity posted
+    PARTIALLY_RECEIVED --> RECONCILED: Investigation resolved
+    RECEIVED --> RECONCILED
     REJECTED --> [*]
-    CANCELLED --> [*]
+    RECONCILED --> [*]
 ```
 
 ## 10. Exceptions and recovery
