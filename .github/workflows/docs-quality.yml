@@ -24,7 +24,5 @@ jobs:
           node-version: 22
       - name: Check Markdown formatting
         run: npx --yes markdownlint-cli2 "**/*.md" "#node_modules"
-      - name: Install pinned Mermaid CLI
-        run: npm install --no-save --no-package-lock @mermaid-js/mermaid-cli@11.4.2
-      - name: Validate and render every Mermaid block
-        run: python3 scripts/validate_mermaid.py
+      - name: Validate Mermaid syntax in Markdown
+        uses: sgerrand/mermaid-validation-action@31f8eed257dbbbadad3332c83694866903e92b0e
