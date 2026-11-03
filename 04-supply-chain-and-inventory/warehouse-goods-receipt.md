@@ -218,14 +218,14 @@ Assign a named metric owner, reporting window, and baseline before setting a tar
 
 | Business rule | Acceptance criterion | Verification focus |
 |---|---|---|
-| BR-001 | AC-01 | Requirement and test coverage for the rule |
-| BR-002 | AC-02 | Requirement and test coverage for the rule |
-| BR-003 | AC-02 | Requirement and test coverage for the rule |
-| BR-004 | AC-03 | Requirement and test coverage for the rule |
-| BR-005 | AC-05 | Requirement and test coverage for the rule |
-| BR-006 | AC-06 | Requirement and test coverage for the rule |
-| BR-007 | AC-07 | Requirement and test coverage for the rule |
-| BR-008 | AC-08 | Requirement and test coverage for the rule |
+| BR-001 | AC-01 | stock is held in exception status and not made available |
+| BR-002 | AC-02 | only accepted quantity becomes available |
+| BR-003 | AC-02 | only accepted quantity becomes available |
+| BR-004 | AC-03 | validation blocks release |
+| BR-005 | AC-05 | excess quantity is held for authorized disposition |
+| BR-006 | AC-06 | approval is blocked or escalated |
+| BR-007 | AC-07 | a reversal/adjustment event with reason and approval is recorded |
+| BR-008 | AC-08 | the match is held for review |
 
 ---
 
