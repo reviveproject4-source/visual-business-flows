@@ -54,25 +54,26 @@ This flow describes the human and organizational process, independent of a speci
 
 ```mermaid
 flowchart TD
-    Start([Trigger]) --> S1
-    S1[Present program terms and capture affirmative enrollment consent]
-    S2[Verify required contact or identity attributes]
-    S3[Check for an existing member to prevent duplicate profiles]
-    S4[Create member account and issue member identifier]
-    S5[Record eligible purchase event after transaction confirmation]
-    S6[Calculate points using active program rule version]
-    S7[Update point ledger and evaluate tier qualification]
-    S8[Notify member of balance or tier change]
-    S9[Process returns, reversals, expiry, and account closure]
-    S1 --> S2
-    S2 --> S3
-    S3 --> S4
-    S4 --> S5
-    S5 --> S6
-    S6 --> S7
-    S7 --> S8
-    S8 --> S9
-    S9 --> End([Outcome])
+    A([Customer requests enrollment]) --> B[Present terms and capture affirmative consent]
+    B --> C{Consent granted?}
+    C -->|No| X[Stop enrollment and record refusal]
+    C -->|Yes| D[Verify required identity/contact attributes]
+    D --> E[Search for existing member identity]
+    E --> F{Existing or ambiguous match?}
+    F -->|Yes| G[Link existing account or route manual review]
+    G --> H{Identity resolved?}
+    H -->|No| X
+    H -->|Yes| I[Activate member profile]
+    F -->|No| J[Create member using current program rules]
+    J --> I
+    I --> K[Receive confirmed eligible purchase event]
+    K --> L[Append points ledger transaction]
+    L --> M[Evaluate tier and notify member]
+    M --> N{Return, reversal, expiry, or closure event?}
+    N -->|Yes| O[Apply approved ledger adjustment or closure]
+    N -->|No| P[Maintain active membership]
+    O --> Q([Record resulting balance and status])
+    P --> Q
 ```
 
 ## 6. System interaction view
