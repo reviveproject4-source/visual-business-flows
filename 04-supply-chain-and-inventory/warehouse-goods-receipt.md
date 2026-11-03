@@ -36,13 +36,14 @@ Goods may arrive in quantities or condition different from the purchase order. I
 
 ## 4. Trigger, preconditions, and postconditions
 
-**Trigger:** A valid business event or authorized user action initiates the workflow.
+**Trigger:** A supplier delivery arrives at the receiving location against a purchase order, ASN, or approved inbound reference.
 
 **Preconditions**
-- Initiating actor or service is authenticated.
-- Required master data, policy versions, and reference records are available.
-- Requested object is in a state that permits the operation.
-- Required permissions and segregation-of-duty controls are configured.
+- Supplier, receiving location, purchase order/ASN, SKU, and unit-of-measure references are valid.
+- Expected quantities, tolerances, batch/serial/expiry requirements, and inspection rules are available.
+- Receiving, quality inspection, quarantine, and rejection responsibilities are assigned.
+- Inventory is unavailable for sale until configured acceptance/posting conditions are met.
+- Discrepancy evidence and supplier-claim ownership are defined.
 
 **Postconditions**
 - Business object has an explicit final or pending status.
@@ -136,7 +137,7 @@ Use stable identifiers, explicit timestamps/time zones, currency and unit defini
 
 ## 9. State model
 
-The following is a lifecycle scaffold. Rename, add, or remove states to reflect the domain and define permitted transitions in the implementation specification.
+The state names and transitions below describe the proposed lifecycle for this workflow. Confirm guards, role permissions, timeout transitions, and terminal-state behavior with the process owner and implementation team before production use.
 
 ```mermaid
 stateDiagram-v2
