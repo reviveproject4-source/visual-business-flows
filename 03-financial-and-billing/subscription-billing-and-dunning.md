@@ -35,13 +35,14 @@ Recurring charges can fail because of expired credentials, insufficient funds, p
 
 ## 4. Trigger, preconditions, and postconditions
 
-**Trigger:** A valid business event or authorized user action initiates the workflow.
+**Trigger:** A subscription billing date, renewal event, or authorized plan change creates a billable invoice obligation.
 
 **Preconditions**
-- Initiating actor or service is authenticated.
-- Required master data, policy versions, and reference records are available.
-- Requested object is in a state that permits the operation.
-- Required permissions and segregation-of-duty controls are configured.
+- Subscription, customer/tenant, plan version, billing cadence, currency, and tax configuration are valid.
+- Entitlement and cancellation/effective-date rules are available.
+- A payment method or permitted manual collection route exists.
+- Retry schedule, grace period, suspension, and dunning communication rules are approved configuration.
+- Invoice numbering and accounting handoff requirements are defined.
 
 **Postconditions**
 - Business object has an explicit final or pending status.
@@ -140,7 +141,7 @@ Use stable identifiers, explicit timestamps/time zones, currency and unit defini
 
 ## 9. State model
 
-The following is a lifecycle scaffold. Rename, add, or remove states to reflect the domain and define permitted transitions in the implementation specification.
+The state names and transitions below describe the proposed lifecycle for this workflow. Confirm guards, role permissions, timeout transitions, and terminal-state behavior with the process owner and implementation team before production use.
 
 ```mermaid
 stateDiagram-v2
