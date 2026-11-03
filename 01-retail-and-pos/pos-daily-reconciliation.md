@@ -271,20 +271,20 @@ The following must be confirmed with stakeholders before implementation:
 
 | Business rule | Acceptance criterion | Verification focus |
 |---|---|---|
-| BR-001 | AC-02 | Unique close per register and shift |
-| BR-002 | AC-02 | Snapshot identity, cutoff, and calculation version |
-| BR-003 | AC-01 | Server-side blind-count visibility |
-| BR-004 | AC-04 | Immutable initial count and separate recount attempt |
-| BR-005 | AC-03 | Tender-specific variance calculation |
-| BR-006 | AC-06 | Reason and evidence retained for variance |
-| BR-007 | AC-04, AC-06 | Recount actor, witness, timestamp, and history |
-| BR-008 | AC-05 | Server-side approval authorization |
-| BR-009 | AC-09 | No silent edit/delete; controlled correction event |
-| BR-010 | AC-03 | Cash overage/shortage not netted across tenders or shifts |
-| BR-011 | AC-07 | Idempotent accounting posting |
-| BR-012 | AC-08 | Visible failed/pending posting and safe retry |
-| BR-013 | AC-10 | Elevated reopen approval and preserved history |
-| BR-014 | AC-05, AC-06 | Unresolved variance remains explicit and auditable |
+| BR-001 | AC-02 | the result references a stable snapshot and cutoff time |
+| BR-002 | AC-02 | the result references a stable snapshot and cutoff time |
+| BR-003 | AC-01 | expected cash is not exposed through the UI or the cashier-facing API response |
+| BR-004 | AC-04 | a new count attempt is created and the original remains readable |
+| BR-005 | AC-03 | the two differences remain separate and are not netted |
+| BR-006 | AC-06 | the initial count, recounts, reason, evidence references, decisions, and timestamps are available |
+| BR-007 | AC-04, AC-06 | a new count attempt is created and the original remains readable; the initial count, recounts, reason, evidence references, decisions, and timestamps are available |
+| BR-008 | AC-05 | the server rejects the command and records the denied action where required |
+| BR-009 | AC-09 | the operation is rejected or represented as a separately authorized correction event |
+| BR-010 | AC-03 | the two differences remain separate and are not netted |
+| BR-011 | AC-07 | no duplicate posting is created |
+| BR-012 | AC-08 | the close retains a visible pending/failed posting state and a retry path |
+| BR-013 | AC-10 | elevated authorization and a reason are required and the original close history remains intact |
+| BR-014 | AC-05, AC-06 | the server rejects the command and records the denied action where required; the initial count, recounts, reason, evidence references, decisions, and timestamps are available |
 
 ---
 
