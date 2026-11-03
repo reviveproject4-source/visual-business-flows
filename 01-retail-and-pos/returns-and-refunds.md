@@ -79,7 +79,7 @@ flowchart TD
 
 ## 6. System interaction view
 
-This logical sequence shows system responsibilities. Adapt participants and messages to the selected architecture and provider contract.
+The sequence models return eligibility, item inspection, inventory disposition, refund authorization, payment-provider response, and idempotent refund recovery.
 
 ```mermaid
 sequenceDiagram
