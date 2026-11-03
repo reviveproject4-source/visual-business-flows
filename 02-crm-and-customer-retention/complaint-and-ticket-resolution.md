@@ -54,25 +54,25 @@ This flow describes the human and organizational process, independent of a speci
 
 ```mermaid
 flowchart TD
-    Start([Trigger]) --> S1
-    S1[Capture complaint from supported channel and issue ticket reference]
-    S2[Identify customer, order, product, and contact preference]
-    S3[Classify category, severity, impact, and priority]
-    S4[Assign accountable owner and response target]
-    S5[Acknowledge receipt and investigate source records]
-    S6[Resolve within agent authority or escalate with evidence]
-    S7[Communicate proposed resolution and obtain response where required]
-    S8[Record outcome, compensation, and root cause]
-    S9[Close or reopen based on customer response and policy]
-    S1 --> S2
-    S2 --> S3
-    S3 --> S4
-    S4 --> S5
-    S5 --> S6
-    S6 --> S7
-    S7 --> S8
-    S8 --> S9
-    S9 --> End([Outcome])
+    A([Complaint received]) --> B[Create ticket and acknowledge receipt]
+    B --> C[Identify customer, order, product, and contact preference]
+    C --> D[Classify severity, impact, category, and response target]
+    D --> E[Assign accountable case owner]
+    E --> F[Investigate source records and gather evidence]
+    F --> G{Can frontline owner resolve within authority?}
+    G -->|Yes| H[Prepare policy-compliant resolution]
+    G -->|No| I[Escalate with evidence and requested decision]
+    I --> J{Supervisor decision?}
+    J -->|More evidence| F
+    J -->|Rejected| K[Communicate reason and available next step]
+    J -->|Approved| H
+    H --> L[Communicate proposed outcome]
+    L --> M{Customer accepts or closure policy met?}
+    M -->|No| N[Reopen or continue investigation]
+    N --> F
+    M -->|Yes| O[Record resolution, compensation, and root cause]
+    K --> O
+    O --> P([Close ticket with audit trail])
 ```
 
 ## 6. System interaction view
