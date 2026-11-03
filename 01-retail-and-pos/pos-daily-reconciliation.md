@@ -269,13 +269,22 @@ The following must be confirmed with stakeholders before implementation:
 
 ## 15. Traceability
 
-| Requirement group | Related rules | Acceptance criteria |
+| Business rule | Acceptance criterion | Verification focus |
 |---|---|---|
-| Close and snapshot | BR-001, BR-002 | AC-02 |
-| Blind count and tender calculation | BR-003, BR-005 | AC-01, AC-03 |
-| Recount and auditability | BR-004, BR-006, BR-007, BR-009 | AC-04, AC-06, AC-09 |
-| Approval and exception | BR-008, BR-013, BR-014 | AC-05, AC-10 |
-| Accounting integration | BR-011, BR-012 | AC-07, AC-08 |
+| BR-001 | AC-02 | Unique close per register and shift |
+| BR-002 | AC-02 | Snapshot identity, cutoff, and calculation version |
+| BR-003 | AC-01 | Server-side blind-count visibility |
+| BR-004 | AC-04 | Immutable initial count and separate recount attempt |
+| BR-005 | AC-03 | Tender-specific variance calculation |
+| BR-006 | AC-06 | Reason and evidence retained for variance |
+| BR-007 | AC-04, AC-06 | Recount actor, witness, timestamp, and history |
+| BR-008 | AC-05 | Server-side approval authorization |
+| BR-009 | AC-09 | No silent edit/delete; controlled correction event |
+| BR-010 | AC-03 | Cash overage/shortage not netted across tenders or shifts |
+| BR-011 | AC-07 | Idempotent accounting posting |
+| BR-012 | AC-08 | Visible failed/pending posting and safe retry |
+| BR-013 | AC-10 | Elevated reopen approval and preserved history |
+| BR-014 | AC-05, AC-06 | Unresolved variance remains explicit and auditable |
 
 ---
 
