@@ -34,6 +34,7 @@ Adapt every workflow to the organization's policies, risk appetite, systems, rol
 The repository currently contains **16 workflow files across five domains**.
 
 ### 1. Retail and POS
+
 | Workflow | Focus |
 |---|---|
 | [POS daily reconciliation](./01-retail-and-pos/pos-daily-reconciliation.md) | Blind count, variance investigation, authorization, and settlement |
@@ -42,6 +43,7 @@ The repository currently contains **16 workflow files across five domains**.
 | [Low-stock alert and restock](./01-retail-and-pos/low-stock-alert-and-restock.md) | Reorder trigger and replenishment |
 
 ### 2. CRM and customer retention
+
 | Workflow | Focus |
 |---|---|
 | [Dormant customer reactivation](./02-crm-and-customer-retention/dormant-customer-reactivation.md) | Inactivity identification and win-back |
@@ -49,20 +51,23 @@ The repository currently contains **16 workflow files across five domains**.
 | [Complaint and ticket resolution](./02-crm-and-customer-retention/complaint-and-ticket-resolution.md) | Triage, escalation, and resolution |
 
 ### 3. Financial and billing
+
 | Workflow | Focus |
 |---|---|
 | [Subscription billing and dunning](./03-financial-and-billing/subscription-billing-and-dunning.md) | Renewal, failed payment, retry, and access states |
-| [Multi-vendor escrow split](./03-financial-and-billing/multi-vendor-escrow-split.md) | Conditional settlement and allocation |
+| [Multi-vendor settlement](./03-financial-and-billing/multi-vendor-escrow-split.md) | Conditional settlement and allocation |
 | [Expense approval hierarchy](./03-financial-and-billing/expense-approval-hierarchy.md) | Approval routing and authorization |
 
 ### 4. Supply chain and inventory
+
 | Workflow | Focus |
 |---|---|
 | [Warehouse goods receipt](./04-supply-chain-and-inventory/warehouse-goods-receipt.md) | Receiving, quantity checks, and quarantine |
 | [Inter-branch stock transfer](./04-supply-chain-and-inventory/inter-branch-stock-transfer.md) | Dispatch, in-transit custody, and receipt variance |
-| [Dead-stock liquidation](./04-supply-chain-and-inventory/dead-stock-liquidation.md) | Slow-moving stock review and disposition |
+| [Dead-stock review](./04-supply-chain-and-inventory/dead-stock-liquidation.md) | Slow-moving stock review and disposition |
 
 ### 5. System integrations
+
 | Workflow | Focus |
 |---|---|
 | [Payment webhook settlement](./05-system-integrations/webhook-payment-settlement.md) | Signature validation, idempotency, retries, and reconciliation |
@@ -113,7 +118,8 @@ Contributions are welcome from business analysts, system analysts, operators, pr
 
 **Tri Raida** · [GitHub profile](https://github.com/reviveproject4-source)
 
-For professional workflow analysis and system specification enquiries: tri.raida.consulting@gmail.com
+For professional workflow analysis and system specification enquiries, contact
+[tri.raida.consulting@gmail.com](mailto:tri.raida.consulting@gmail.com).
 
 ## License
 
