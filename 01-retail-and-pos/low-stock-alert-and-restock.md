@@ -225,13 +225,13 @@ Assign a named metric owner, reporting window, and baseline before setting a tar
 
 | Business rule | Acceptance criterion | Verification focus |
 |---|---|---|
-| BR-001 | AC-02 | Requirement and test coverage for the rule |
-| BR-002 | AC-02 | Requirement and test coverage for the rule |
-| BR-003 | AC-01 | Requirement and test coverage for the rule |
-| BR-004 | AC-05 | Requirement and test coverage for the rule |
-| BR-005 | AC-06 | Requirement and test coverage for the rule |
-| BR-006 | AC-04 | Requirement and test coverage for the rule |
-| BR-007 | AC-03 | Requirement and test coverage for the rule |
+| BR-001 | AC-02 | the proposal is marked provisional or blocked |
+| BR-002 | AC-02 | the proposal is marked provisional or blocked |
+| BR-003 | AC-01 | it does not create a duplicate requisition |
+| BR-004 | AC-05 | the suggested quantity respects those constraints |
+| BR-005 | AC-06 | no duplicate supplier commitment is created |
+| BR-006 | AC-04 | it routes to the next authorized level |
+| BR-007 | AC-03 | received units update stock and the outstanding balance remains open |
 
 ---
 
