@@ -35,13 +35,14 @@ Marketplace orders may involve multiple vendors, platform fees, refunds, dispute
 
 ## 4. Trigger, preconditions, and postconditions
 
-**Trigger:** A valid business event or authorized user action initiates the workflow.
+**Trigger:** An order reaches its configured release milestone and eligible funds are held for settlement.
 
 **Preconditions**
-- Initiating actor or service is authenticated.
-- Required master data, policy versions, and reference records are available.
-- Requested object is in a state that permits the operation.
-- Required permissions and segregation-of-duty controls are configured.
+- Order, buyer, vendor identities, and vendor allocation records are stable and auditable.
+- Provider confirms captured/held funds and supports the configured marketplace/escrow arrangement.
+- Split amounts, fees, taxes, reserves, and rounding rules are versioned.
+- Delivery/acceptance evidence and dispute/chargeback status are available.
+- Release, hold, reversal, and manual-review permissions are separated.
 
 **Postconditions**
 - Business object has an explicit final or pending status.
@@ -140,7 +141,7 @@ Use stable identifiers, explicit timestamps/time zones, currency and unit defini
 
 ## 9. State model
 
-The following is a lifecycle scaffold. Rename, add, or remove states to reflect the domain and define permitted transitions in the implementation specification.
+The state names and transitions below describe the proposed lifecycle for this workflow. Confirm guards, role permissions, timeout transitions, and terminal-state behavior with the process owner and implementation team before production use.
 
 ```mermaid
 stateDiagram-v2
