@@ -196,6 +196,8 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - **AC-02:** Given inventory data is stale, when reorder calculation runs, then the proposal is marked provisional or blocked.
 - **AC-03:** Given a PO is partially received, when receipt is posted, then received units update stock and the outstanding balance remains open.
 - **AC-04:** Given a requisition exceeds an approver's authority, when submitted, then it routes to the next authorized level.
+- **AC-05:** Given a replenishment proposal is calculated, when supplier pack size or minimum order quantity applies, then the suggested quantity respects those constraints.
+- **AC-06:** Given an approved purchase order is transmitted, when the transmission is retried with the same request key, then no duplicate supplier commitment is created.
 
 ## 13. Operational metrics
 
@@ -221,9 +223,15 @@ Assign a named metric owner, reporting window, and baseline before setting a tar
 
 ## 15. Traceability
 
-| Rule group | Acceptance criteria | Implementation evidence |
+| Business rule | Acceptance criterion | Verification focus |
 |---|---|---|
-| BR-001 to BR-007 | AC-01 to AC-04 | Unit/integration tests, audit events, and process-owner sign-off |
+| BR-001 | AC-02 | Requirement and test coverage for the rule |
+| BR-002 | AC-02 | Requirement and test coverage for the rule |
+| BR-003 | AC-01 | Requirement and test coverage for the rule |
+| BR-004 | AC-05 | Requirement and test coverage for the rule |
+| BR-005 | AC-06 | Requirement and test coverage for the rule |
+| BR-006 | AC-04 | Requirement and test coverage for the rule |
+| BR-007 | AC-03 | Requirement and test coverage for the rule |
 
 ---
 
