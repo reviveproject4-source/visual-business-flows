@@ -219,13 +219,13 @@ Assign a named metric owner, reporting window, and baseline before setting a tar
 
 | Business rule | Acceptance criterion | Verification focus |
 |---|---|---|
-| BR-001 | AC-05 | Requirement and test coverage for the rule |
-| BR-002 | AC-01 | Requirement and test coverage for the rule |
-| BR-003 | AC-02 | Requirement and test coverage for the rule |
-| BR-004 | AC-03 | Requirement and test coverage for the rule |
-| BR-005 | AC-04 | Requirement and test coverage for the rule |
-| BR-006 | AC-06 | Requirement and test coverage for the rule |
-| BR-007 | AC-07 | Requirement and test coverage for the rule |
+| BR-001 | AC-05 | enrollment does not become active |
+| BR-002 | AC-01 | duplicate account creation is prevented or routed to review |
+| BR-003 | AC-02 | only one earning entry exists |
+| BR-004 | AC-03 | a linked compensating points entry is posted |
+| BR-005 | AC-04 | the applicable rule version and period are recorded |
+| BR-006 | AC-06 | redemption is rejected |
+| BR-007 | AC-07 | the change is blocked |
 
 ---
 
