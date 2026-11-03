@@ -84,21 +84,34 @@ This logical sequence shows system responsibilities. Adapt participants and mess
 ```mermaid
 sequenceDiagram
     autonumber
-    actor User as Business actor
-    participant App as Business application
-    participant Core as Domain service
-    participant External as External system
-    participant Audit as Audit/event store
-    User->>App: Submit request or business event
-    App->>Core: Validate identity, scope, and business rules
-    Core->>Core: Evaluate state and authorization
-    Core->>Audit: Persist decision and correlation reference
-    Core->>External: Send authorized request when required
-    External-->>Core: Return result or asynchronous event
-    Core->>Core: Validate response and apply allowed transition
-    Core->>Audit: Record outcome and processing status
-    Core-->>App: Return current status and next action
-    App-->>User: Show outcome or actionable exception
+    participant Inventory as Inventory Service
+    participant Planner as Replenishment Service
+    participant Buyer
+    participant Approver
+    participant Supplier
+    participant Receiving
+    participant Audit
+    Inventory->>Planner: Publish stock movement or scheduled snapshot
+    Planner->>Planner: Calculate inventory position and lead-time demand
+    Planner->>Planner: Check open POs, transfers, MOQ, and pack size
+    alt No replenishment required
+        Planner->>Audit: Record evaluation and no-action reason
+    else Replenishment proposed
+        Planner->>Buyer: Present requisition proposal and assumptions
+        Buyer->>Planner: Confirm supplier and requested quantity
+        Planner->>Approver: Request approval within configured authority
+        alt Rejected or returned
+            Approver-->>Planner: Reject or request revision with reason
+            Planner->>Audit: Record decision
+        else Approved
+            Planner->>Supplier: Issue purchase order with unique reference
+            Supplier-->>Planner: Acknowledge or reject PO
+            Supplier->>Receiving: Deliver goods
+            Receiving->>Inventory: Post accepted quantity and quarantine discrepancies
+            Inventory-->>Receiving: Receipt and stock ledger reference
+            Planner->>Audit: Record PO, receipt, and replenishment outcome
+        end
+    end
 ```
 
 ## 7. Business rules
@@ -134,18 +147,26 @@ The following is a lifecycle scaffold. Rename, add, or remove states to reflect 
 
 ```mermaid
 stateDiagram-v2
-    [*] --> REQUESTED
-    REQUESTED --> VALIDATING
-    VALIDATING --> IN_PROGRESS: Valid
-    VALIDATING --> REJECTED: Invalid
-    IN_PROGRESS --> AWAITING_REVIEW: Exception or approval required
-    AWAITING_REVIEW --> IN_PROGRESS: Approved / retry permitted
-    AWAITING_REVIEW --> REJECTED: Declined
-    IN_PROGRESS --> COMPLETED: Success conditions met
-    REQUESTED --> CANCELLED: Authorized cancellation
-    COMPLETED --> [*]
+    [*] --> MONITORING
+    MONITORING --> EVALUATING: Stock event or scheduled run
+    EVALUATING --> NO_ACTION: Above reorder threshold
+    EVALUATING --> PROPOSAL_READY: Replenishment needed
+    PROPOSAL_READY --> REVIEW_PENDING
+    REVIEW_PENDING --> REVISION_REQUIRED: Returned for changes
+    REVISION_REQUIRED --> REVIEW_PENDING
+    REVIEW_PENDING --> REJECTED: Rejected
+    REVIEW_PENDING --> PO_ISSUED: Approved
+    PO_ISSUED --> SUPPLIER_ACK_PENDING
+    SUPPLIER_ACK_PENDING --> ACKNOWLEDGED: Supplier confirms
+    SUPPLIER_ACK_PENDING --> SUPPLIER_EXCEPTION: Rejected or no response
+    SUPPLIER_EXCEPTION --> SUPPLIER_ACK_PENDING: Resolved
+    ACKNOWLEDGED --> PARTIALLY_RECEIVED
+    PARTIALLY_RECEIVED --> RECEIVED: Remaining quantity resolved
+    ACKNOWLEDGED --> RECEIVED: Full receipt
+    RECEIVED --> RECONCILED
+    NO_ACTION --> [*]
     REJECTED --> [*]
-    CANCELLED --> [*]
+    RECONCILED --> [*]
 ```
 
 ## 10. Exceptions and recovery
