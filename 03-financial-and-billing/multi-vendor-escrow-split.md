@@ -202,7 +202,12 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - Unreconciled ledger balance by currency
 - Dispute and refund rate by vendor
 
-Define numerator, denominator, source system, measurement window, owner, and baseline before setting targets. Metrics are measurement proposals, not promised improvements.
+- **Settlement accuracy:** payouts matching approved allocation to the smallest currency unit ÷ completed payouts.
+- **Payout cycle time:** provider-confirmed payout timestamp minus release-eligible timestamp; report median and P90.
+- **Held-funds aging:** value and count of funds remaining held beyond the configured release window.
+- **Dispute hold rate:** orders placed on dispute hold ÷ orders eligible for settlement. Review daily with finance operations.
+
+Assign a named metric owner, reporting window, and baseline before setting a target. These are measurement definitions, not promised improvements.
 
 ## 14. Assumptions and open decisions
 
