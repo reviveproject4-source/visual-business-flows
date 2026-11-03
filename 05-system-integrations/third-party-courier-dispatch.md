@@ -79,7 +79,7 @@ flowchart TD
 
 ## 6. System interaction view
 
-This logical sequence shows system responsibilities. Adapt participants and messages to the selected architecture and provider contract.
+The sequence models shipment readiness, carrier booking, idempotency lookup, driver assignment, verified pickup custody, tracking callbacks, delivery proof, and return/retry outcomes.
 
 ```mermaid
 sequenceDiagram
