@@ -190,6 +190,9 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - **AC-02:** Given driver identity does not match provider assignment, when pickup is attempted, then handover is blocked and an exception is recorded.
 - **AC-03:** Given a duplicate delivered callback arrives, when processed, then shipment is completed once and audit history is preserved.
 - **AC-04:** Given delivery fails, when failure callback is received, then shipment enters a recoverable exception state rather than DELIVERED.
+- **AC-05:** Given a shipment is booked, when customer contact/location details are sent to the carrier, then only fields necessary for fulfillment are shared.
+- **AC-06:** Given cancellation, redelivery, or return-to-origin is requested, when provider policy applies a fee or restriction, then the configured rule and evidence are recorded.
+- **AC-07:** Given high-risk goods are delivered, when courier completion is received, then customer acceptance is not assumed unless the approved policy permits it.
 
 ## 13. Operational metrics
 
@@ -215,9 +218,16 @@ Assign a named metric owner, reporting window, and baseline before setting a tar
 
 ## 15. Traceability
 
-| Rule group | Acceptance criteria | Implementation evidence |
+| Business rule | Acceptance criterion | Verification focus |
 |---|---|---|
-| BR-001 to BR-008 | AC-01 to AC-04 | Unit/integration tests, audit events, and process-owner sign-off |
+| BR-001 | AC-01 | Requirement and test coverage for the rule |
+| BR-002 | AC-01 | Requirement and test coverage for the rule |
+| BR-003 | AC-02 | Requirement and test coverage for the rule |
+| BR-004 | AC-03 | Requirement and test coverage for the rule |
+| BR-005 | AC-04 | Requirement and test coverage for the rule |
+| BR-006 | AC-05 | Requirement and test coverage for the rule |
+| BR-007 | AC-06 | Requirement and test coverage for the rule |
+| BR-008 | AC-07 | Requirement and test coverage for the rule |
 
 ---
 
