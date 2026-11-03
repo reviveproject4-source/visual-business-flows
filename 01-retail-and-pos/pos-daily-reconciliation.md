@@ -230,16 +230,16 @@ Every material event should record actor or service identity, timestamp, registe
 
 ## 12. Acceptance criteria
 
-1. **Blind count:** Given a cashier starts a close, when the initial count form is displayed, then expected cash is not exposed through the UI or the cashier-facing API response.
-2. **Snapshot consistency:** Given a close has started, when eligible transactions are calculated, then the result references a stable snapshot and cutoff time.
-3. **Tender separation:** Given cash is short and card is over, when variance is calculated, then the two differences remain separate and are not netted.
-4. **Immutable attempts:** Given an initial count is submitted, when a recount is required, then a new count attempt is created and the original remains readable.
-5. **Approval control:** Given a non-zero variance, when an unauthorized user attempts approval, then the server rejects the command and records the denied action where required.
-6. **Evidence traceability:** Given a variance case is escalated, when an auditor opens it, then the initial count, recounts, reason, evidence references, decisions, and timestamps are available.
-7. **Idempotent posting:** Given an accounting request is retried with the same idempotency key, then no duplicate posting is created.
-8. **Failure visibility:** Given accounting rejects or cannot receive a posting, then the close retains a visible pending/failed posting state and a retry path.
-9. **No silent adjustment:** Given a user attempts to change expected totals or delete a submitted count, then the operation is rejected or represented as a separately authorized correction event.
-10. **Reopen control:** Given a closed shift is reopened, then elevated authorization and a reason are required and the original close history remains intact.
+1. **AC-01 — Blind count:** Given a cashier starts a close, when the initial count form is displayed, then expected cash is not exposed through the UI or the cashier-facing API response.
+2. **AC-02 — Snapshot consistency:** Given a close has started, when eligible transactions are calculated, then the result references a stable snapshot and cutoff time.
+3. **AC-03 — Tender separation:** Given cash is short and card is over, when variance is calculated, then the two differences remain separate and are not netted.
+4. **AC-04 — Immutable attempts:** Given an initial count is submitted, when a recount is required, then a new count attempt is created and the original remains readable.
+5. **AC-05 — Approval control:** Given a non-zero variance, when an unauthorized user attempts approval, then the server rejects the command and records the denied action where required.
+6. **AC-06 — Evidence traceability:** Given a variance case is escalated, when an auditor opens it, then the initial count, recounts, reason, evidence references, decisions, and timestamps are available.
+7. **AC-07 — Idempotent posting:** Given an accounting request is retried with the same idempotency key, then no duplicate posting is created.
+8. **AC-08 — Failure visibility:** Given accounting rejects or cannot receive a posting, then the close retains a visible pending/failed posting state and a retry path.
+9. **AC-09 — No silent adjustment:** Given a user attempts to change expected totals or delete a submitted count, then the operation is rejected or represented as a separately authorized correction event.
+10. **AC-10 — Reopen control:** Given a closed shift is reopened, then elevated authorization and a reason are required and the original close history remains intact.
 
 ## 13. Operational metrics
 
