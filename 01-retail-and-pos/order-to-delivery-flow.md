@@ -83,21 +83,38 @@ This logical sequence shows system responsibilities. Adapt participants and mess
 ```mermaid
 sequenceDiagram
     autonumber
-    actor User as Business actor
-    participant App as Business application
-    participant Core as Domain service
-    participant External as External system
-    participant Audit as Audit/event store
-    User->>App: Submit request or business event
-    App->>Core: Validate identity, scope, and business rules
-    Core->>Core: Evaluate state and authorization
-    Core->>Audit: Persist decision and correlation reference
-    Core->>External: Send authorized request when required
-    External-->>Core: Return result or asynchronous event
-    Core->>Core: Validate response and apply allowed transition
-    Core->>Audit: Record outcome and processing status
-    Core-->>App: Return current status and next action
-    App-->>User: Show outcome or actionable exception
+    actor Customer
+    participant Channel as Sales Channel
+    participant Order as Order Service
+    participant Stock as Inventory
+    participant Pay as Payment Provider
+    participant Fulfil as Fulfillment
+    participant Courier
+    participant Audit
+    Customer->>Channel: Place order
+    Channel->>Order: Submit order and delivery details
+    Order->>Stock: Check availability and reserve items
+    Stock-->>Order: Reservation result
+    alt Stock unavailable
+        Order-->>Channel: Reject or request approved substitution
+        Channel-->>Customer: Explain unavailable items
+    else Stock reserved
+        Order->>Pay: Authorize or confirm payment
+        Pay-->>Order: Payment result
+        alt Payment not confirmed
+            Order->>Stock: Release reservation
+            Order-->>Channel: Keep order unpaid or reject
+        else Payment confirmed
+            Order->>Fulfil: Release pick request
+            Fulfil->>Fulfil: Pick, verify, pack, and stage
+            Fulfil->>Courier: Request pickup when delivery applies
+            Courier-->>Fulfil: Booking and handover status
+            Fulfil->>Audit: Record handover or delivery evidence
+            Order->>Audit: Record order, payment, and fulfillment references
+            Order-->>Channel: Return fulfillment status
+        end
+    end
+    Channel-->>Customer: Show order status
 ```
 
 ## 7. Business rules
@@ -134,18 +151,28 @@ The following is a lifecycle scaffold. Rename, add, or remove states to reflect 
 
 ```mermaid
 stateDiagram-v2
-    [*] --> REQUESTED
-    REQUESTED --> VALIDATING
-    VALIDATING --> IN_PROGRESS: Valid
-    VALIDATING --> REJECTED: Invalid
-    IN_PROGRESS --> AWAITING_REVIEW: Exception or approval required
-    AWAITING_REVIEW --> IN_PROGRESS: Approved / retry permitted
-    AWAITING_REVIEW --> REJECTED: Declined
-    IN_PROGRESS --> COMPLETED: Success conditions met
-    REQUESTED --> CANCELLED: Authorized cancellation
-    COMPLETED --> [*]
-    REJECTED --> [*]
+    [*] --> DRAFT
+    DRAFT --> VALIDATING
+    VALIDATING --> STOCK_RESERVED: Items available
+    VALIDATING --> REJECTED: Invalid order
+    VALIDATING --> SUBSTITUTION_PENDING: Stock shortage
+    SUBSTITUTION_PENDING --> STOCK_RESERVED: Customer accepts substitution
+    SUBSTITUTION_PENDING --> CANCELLED: Customer declines
+    STOCK_RESERVED --> PAYMENT_PENDING
+    PAYMENT_PENDING --> PAID: Payment confirmed
+    PAYMENT_PENDING --> PAYMENT_FAILED: Payment rejected or expired
+    PAYMENT_FAILED --> CANCELLED: Reservation released
+    PAID --> PICKING
+    PICKING --> PACKED: Pick verified
+    PICKING --> EXCEPTION: Shortage or damage
+    EXCEPTION --> PICKING: Approved resolution
+    EXCEPTION --> CANCELLED: Cannot fulfill
+    PACKED --> DISPATCHED: Handover recorded
+    DISPATCHED --> DELIVERED: Delivery evidence accepted
+    DELIVERED --> COMPLETED
     CANCELLED --> [*]
+    REJECTED --> [*]
+    COMPLETED --> [*]
 ```
 
 ## 10. Exceptions and recovery
