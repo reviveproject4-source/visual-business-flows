@@ -84,21 +84,31 @@ This logical sequence shows system responsibilities. Adapt participants and mess
 ```mermaid
 sequenceDiagram
     autonumber
-    actor User as Business actor
-    participant App as Business application
-    participant Core as Domain service
-    participant External as External system
-    participant Audit as Audit/event store
-    User->>App: Submit request or business event
-    App->>Core: Validate identity, scope, and business rules
-    Core->>Core: Evaluate state and authorization
-    Core->>Audit: Persist decision and correlation reference
-    Core->>External: Send authorized request when required
-    External-->>Core: Return result or asynchronous event
-    Core->>Core: Validate response and apply allowed transition
-    Core->>Audit: Record outcome and processing status
-    Core-->>App: Return current status and next action
-    App-->>User: Show outcome or actionable exception
+    actor Buyer
+    participant Order
+    participant Payment as Payment Provider
+    participant Ledger as Marketplace Ledger
+    participant Fulfillment
+    participant Risk as Risk/Dispute Service
+    participant Payout
+    participant Audit
+    Buyer->>Order: Place multi-vendor order
+    Order->>Ledger: Allocate order lines to vendor sub-ledgers
+    Order->>Payment: Collect buyer payment
+    Payment-->>Order: Payment and settlement references
+    Order->>Ledger: Record gross collection and fee basis
+    Fulfillment-->>Risk: Publish line-level delivery/return status
+    Risk->>Ledger: Evaluate hold/release eligibility per contract and policy
+    alt Dispute, return, or hold condition exists
+        Risk->>Ledger: Retain affected payable and record reason
+    else Release conditions satisfied
+        Risk->>Payout: Submit approved vendor payable
+        Payout->>Payment: Request provider-supported transfer
+        Payment-->>Payout: Transfer result/reference
+        Payout->>Ledger: Reconcile transfer and vendor balance
+    end
+    Risk->>Audit: Record decision, evidence, and policy version
+    Ledger->>Audit: Record period reconciliation
 ```
 
 ## 7. Business rules
@@ -135,18 +145,25 @@ The following is a lifecycle scaffold. Rename, add, or remove states to reflect 
 
 ```mermaid
 stateDiagram-v2
-    [*] --> REQUESTED
-    REQUESTED --> VALIDATING
-    VALIDATING --> IN_PROGRESS: Valid
-    VALIDATING --> REJECTED: Invalid
-    IN_PROGRESS --> AWAITING_REVIEW: Exception or approval required
-    AWAITING_REVIEW --> IN_PROGRESS: Approved / retry permitted
-    AWAITING_REVIEW --> REJECTED: Declined
-    IN_PROGRESS --> COMPLETED: Success conditions met
-    REQUESTED --> CANCELLED: Authorized cancellation
-    COMPLETED --> [*]
-    REJECTED --> [*]
-    CANCELLED --> [*]
+    [*] --> ORDER_CAPTURED
+    ORDER_CAPTURED --> PAYMENT_PENDING
+    PAYMENT_PENDING --> FUNDED: Provider confirms collection
+    PAYMENT_PENDING --> PAYMENT_FAILED
+    FUNDED --> ALLOCATION_RECORDED
+    ALLOCATION_RECORDED --> HOLDING: Fulfillment or risk hold applies
+    ALLOCATION_RECORDED --> RELEASE_ELIGIBLE: Release conditions met
+    HOLDING --> RELEASE_ELIGIBLE: Hold cleared
+    HOLDING --> DISPUTE_REVIEW: Dispute or return opened
+    DISPUTE_REVIEW --> HOLDING: Claim remains open
+    DISPUTE_REVIEW --> ADJUSTED: Refund/chargeback approved
+    RELEASE_ELIGIBLE --> PAYOUT_PENDING
+    PAYOUT_PENDING --> PAID_OUT: Provider confirms transfer
+    PAYOUT_PENDING --> PAYOUT_EXCEPTION: Transfer failed or unknown
+    PAYOUT_EXCEPTION --> PAYOUT_PENDING: Reconciled safe retry
+    PAID_OUT --> RECONCILED
+    ADJUSTED --> RECONCILED
+    PAYMENT_FAILED --> [*]
+    RECONCILED --> [*]
 ```
 
 ## 10. Exceptions and recovery
