@@ -54,27 +54,26 @@ This flow describes the human and organizational process, independent of a speci
 
 ```mermaid
 flowchart TD
-    Start([Trigger]) --> S1
-    S1[Capture order lines and map each line to a vendor]
-    S2[Calculate gross amount, taxes, shipping, discounts, and fee basis]
-    S3[Collect payment and record provider settlement reference]
-    S4[Create vendor payable and platform fee ledger entries]
-    S5[Track fulfillment and return/dispute eligibility per line]
-    S6[Apply hold/release conditions from provider contract and marketplace policy]
-    S7[Calculate net vendor payable after approved adjustments]
-    S8[Submit payout and reconcile provider transfer result]
-    S9[Handle refunds, chargebacks, reserves, and negative balances]
-    S10[Close settlement period with ledger-to-provider reconciliation]
-    S1 --> S2
-    S2 --> S3
-    S3 --> S4
-    S4 --> S5
-    S5 --> S6
-    S6 --> S7
-    S7 --> S8
-    S8 --> S9
-    S9 --> S10
-    S10 --> End([Outcome])
+    A([Multi-vendor order accepted]) --> B[Map order lines to vendors and calculate fee basis]
+    B --> C[Collect buyer payment]
+    C --> D{Provider confirms collection?}
+    D -->|No| X[Keep unpaid; do not create payable]
+    D -->|Yes| E[Record gross collection and vendor ledger allocations]
+    E --> F[Track fulfillment, returns, and disputes per order line]
+    F --> G{Release conditions satisfied?}
+    G -->|No| H[Hold affected vendor payable and record reason]
+    H --> I{Hold or dispute resolved?}
+    I -->|No| J[Carry forward to next review]
+    J --> I
+    I -->|Yes| G
+    G -->|Yes| K[Calculate net payable after approved adjustments]
+    K --> L[Submit provider-supported payout]
+    L --> M{Transfer confirmed?}
+    M -->|No or unknown| N[Reconcile provider status before retry]
+    N --> L
+    M -->|Yes| O[Reconcile vendor balance and settlement ledger]
+    O --> P([Close settlement period])
+    X --> P
 ```
 
 ## 6. System interaction view
