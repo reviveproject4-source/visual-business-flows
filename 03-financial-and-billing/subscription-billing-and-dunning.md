@@ -191,6 +191,9 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - **AC-02:** Given a non-retryable decline occurs, when classified, then automatic retry stops and customer action is requested.
 - **AC-03:** Given a valid late-success event arrives, when processed, then invoice and entitlement are reconciled without duplicate posting.
 - **AC-04:** Given a duplicate webhook is delivered, when processed, then it has no duplicate financial or entitlement effect.
+- **AC-05:** Given retry, grace, or access restriction policy changes, when a billing attempt is evaluated, then the effective policy version is applied and recorded.
+- **AC-06:** Given a subscription is cancelled, when access termination is scheduled, then contract notice and data-retention rules determine the effective date and retained records.
+- **AC-07:** Given a payment update link is issued, when it is used after expiry or outside its scope, then it is rejected without exposing payment credentials.
 
 ## 13. Operational metrics
 
@@ -216,9 +219,16 @@ Assign a named metric owner, reporting window, and baseline before setting a tar
 
 ## 15. Traceability
 
-| Rule group | Acceptance criteria | Implementation evidence |
+| Business rule | Acceptance criterion | Verification focus |
 |---|---|---|
-| BR-001 to BR-008 | AC-01 to AC-04 | Unit/integration tests, audit events, and process-owner sign-off |
+| BR-001 | AC-04 | Requirement and test coverage for the rule |
+| BR-002 | AC-01 | Requirement and test coverage for the rule |
+| BR-003 | AC-05 | Requirement and test coverage for the rule |
+| BR-004 | AC-02 | Requirement and test coverage for the rule |
+| BR-005 | AC-03 | Requirement and test coverage for the rule |
+| BR-006 | AC-03 | Requirement and test coverage for the rule |
+| BR-007 | AC-06 | Requirement and test coverage for the rule |
+| BR-008 | AC-07 | Requirement and test coverage for the rule |
 
 ---
 
