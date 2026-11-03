@@ -1,0 +1,27 @@
+---
+name: Propose a workflow
+about: Suggest a new business process or system workflow pattern
+title: "[Workflow] "
+assignees: []
+---
+
+## Business problem
+What real operational problem should this workflow address?
+
+## Intended users
+Who needs this workflow (e.g. business analyst, operator, developer)?
+
+## Trigger and outcome
+What starts the process, and what should be true when it finishes?
+
+## Known actors and systems
+List known roles, systems, and external parties.
+
+## Important decisions and exceptions
+What alternate paths, failure cases, or recovery steps should be represented?
+
+## Assumptions and evidence
+What is observed, what is assumed, and what needs stakeholder validation?
+
+## Related workflow
+Link any existing file that is similar.

@@ -1,74 +1,209 @@
-# Inter-Branch Inventory Transfer, Transit Shrinkage & Anti-Loss Flow
+# Inter-Branch Stock Transfer and Transit Reconciliation
 
-> **Domain:** Multi-Store Retail Chain, Franchise, Pergudangan Terdistribusi  
-> **Core Mission:** Menghilangkan perselisihan antar kepala cabang toko ("Toko Asal kirim 100, tapi Toko Tujuan mengaku cuma terima 90"), serta melacak pertanggungjawaban barang hilang saat pengiriman di jalan.
+> **Domain:** Multi-branch retail, distributed inventory, logistics  
+> **Document type:** To-Be reference workflow  
+> **Status:** Reference design — validate with process owners before implementation  
+> **Audience:** Business Analysts, Systems Analysts, product teams, and developers
 
----
+## 1. Problem statement
 
-## 1. Masalah Nyata & Risiko Kerugian di Lapangan
+Sending branch, carrier, and receiving branch may report different quantities. Removing stock from origin without tracking transit creates ghost inventory; automatically charging staff or drivers for unexplained shortages creates unsupported liability.
 
-Di bisnis ritel dengan banyak cabang toko, perpindahan barang antar toko adalah sarang kebocoran stok:
-1. **Saling Lempar Tanggung Jawab:** Toko A mengklaim sudah mengirim 50 pcs kopi mahal. Toko B mengklaim saat kardus dibuka hanya ada 45 pcs. Siapa yang bersalah? Kasir Toko A, Kasir Toko B, atau kurir mobil box yang mencuri 5 pcs di perjalanan?
-2. **Stok Mengambang (Ghost Inventory):** Barang yang keluar dari Toko A langsung dihapus dari sistem, padahal butuh waktu 3 hari sampai di Toko B. Selama 3 hari itu, sistem tidak tahu di mana barang berada.
+## 2. Objective and scope
 
----
+**Objective:** Maintain custody and quantity traceability from transfer authorization through dispatch, transit, receipt, discrepancy investigation, and closure.
 
-## 2. Diagram Alur Sistem: "Dual-Scan In-Transit Buffer Protocol"
+**In scope**
+- Operational lifecycle from initiation through resolution and recordkeeping.
+- Business decisions, system responsibilities, exception handling, and audit evidence.
+- Minimum data and acceptance criteria needed for implementation planning.
+
+**Out of scope**
+- Organization-specific legal, tax, accounting, labor, or contractual conclusions.
+- Fixed thresholds, fees, SLA targets, or financial outcomes not validated by the organization.
+- Vendor-specific API contracts unless documented by the selected provider.
+
+## 3. Actors and systems
+
+| Actor / system | Responsibility |
+|---|---|
+| Origin branch | Requests, picks, packs, and dispatches transfer |
+| Origin supervisor | Verifies quantity and handover evidence |
+| Carrier / driver | Accepts custody and transports shipment |
+| Destination branch | Inspects package and counts received units |
+| Inventory control | Investigates discrepancies and approves adjustments |
+| Inventory system | Tracks in-transit and branch stock balances |
+
+## 4. Trigger, preconditions, and postconditions
+
+**Trigger:** A valid business event or authorized user action initiates the workflow.
+
+**Preconditions**
+- Initiating actor or service is authenticated.
+- Required master data, policy versions, and reference records are available.
+- Requested object is in a state that permits the operation.
+- Required permissions and segregation-of-duty controls are configured.
+
+**Postconditions**
+- Business object has an explicit final or pending status.
+- Material decisions, external references, and exceptions are traceable.
+- Related financial, inventory, customer, or access records are synchronized or visibly pending.
+
+## 5. Business process view
+
+This flow describes the human and organizational process, independent of a specific application architecture.
+
+```mermaid
+flowchart TD
+    Start([Trigger]) --> S1
+    S1[Create transfer request with source, destination, and SKU quantities]
+    S2[Check source available stock and destination need]
+    S3[Approve transfer according to branch authority]
+    S4[Pick and independently verify quantities]
+    S5[Pack goods and record package/seal identifiers]
+    S6[Handover shipment to carrier with custody acceptance]
+    S7[Move dispatched quantity to in-transit inventory]
+    S8[Destination inspects package and records seal condition]
+    S9[Count received quantities and classify discrepancies]
+    S10[Move accepted quantities to destination stock and retain shortage investigation]
+    S11[Close transfer after quantity and inventory reconciliation]
+    S1 --> S2
+    S2 --> S3
+    S3 --> S4
+    S4 --> S5
+    S5 --> S6
+    S6 --> S7
+    S7 --> S8
+    S8 --> S9
+    S9 --> S10
+    S10 --> S11
+    S11 --> End([Outcome])
+```
+
+## 6. System interaction view
+
+This logical sequence shows system responsibilities. Adapt participants and messages to the selected architecture and provider contract.
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor StoreA as Kepala Toko A (Asal)
-    actor Driver as Driver Ekspedisi / Kurir Internal
-    actor StoreB as Kepala Toko B (Tujuan)
-    participant WMS as Database Stok Pusat (Cloud)
-
-    Note over StoreA,WMS: TAHAP 1: PERMINTAAN & PENGEMASAN
-    StoreA->>WMS: Buka Surat Jalan Transfer Antar Cabang (SJ-901: 50 Unit)
-    StoreA->>StoreA: Kemas Barang ke Kotak & Pasang Segel Barcode Unik (Segel #SG-4412)
-    StoreA->>WMS: Potong Stok Toko A (-50) -> Masukkan ke "STOK_DALAM_PERJALANAN"
-    
-    Note over StoreA,Driver: TAHAP 2: SERAH TERIMA EXPEDISI
-    Driver->>StoreA: Datang ke Toko A untuk Ambil Barang
-    Driver->>Driver: Periksa Keutuhan Nomor Segel Fisik (#SG-4412)
-    Driver->>WMS: Scan QR Surat Jalan: Konfirmasi Driver Telah Mengambil Paket Utuh
-    
-    Note over Driver,WMS: TAHAP 3: PERJALANAN DI JALAN
-    Note over WMS: Sistem mencatat: Tanggung Jawab Barang Berada 100% pada Driver
-    
-    Note over Driver,StoreB: TAHAP 4: PENERIMAAN DI TOKO B
-    Driver->>StoreB: Tiba di Toko B & Menyerahkan Paket
-    StoreB->>StoreB: Periksa Nomor Segel Fisik: Apakah Segel Rusak / Pernah Dibuka?
-    
-    alt Segel Fisik Terbukti Rusak / Terbuka
-        StoreB->>WMS: Foto Segel Rusak & Wajib Buka Kardus di Depan Driver
-    end
-
-    StoreB->>WMS: Scan Barcode Tiap Satuan Unit Produk (Hitung Fisik Masuk)
-    
-    alt Hitungan Fisik Cocok Sempurna (50 Unit)
-        StoreB->>WMS: Konfirmasi Penerimaan Penuh (Status: COMPLETED)
-        WMS->>WMS: Pindahkan dari "STOK_DALAM_PERJALANAN" ke "STOK_AKTIF_TOKO_B" (+50)
-    else Hitungan Fisik Kurang (Hanya 47 Unit Ditemukan, Kurang 3 Unit)
-        StoreB->>WMS: Input Catatan Selisih: "Diterima 47, Hilang 3 Unit"
-        WMS->>WMS: Pindahkan 47 Unit ke "STOK_AKTIF_TOKO_B"
-        WMS->>WMS: Pindahkan 3 Unit ke Akun Beban "KERUSAKAN_LOGISTIK_DRIVER"
-        WMS-->>StoreA: Notifikasi Otomatis: Surat Jalan Ditutup dengan Selisih
-        WMS-->>Driver: Surat Berita Acara Potong Klaim Pengiriman
-    end
+    actor User as Business actor
+    participant App as Business application
+    participant Core as Domain service
+    participant External as External system
+    participant Audit as Audit/event store
+    User->>App: Submit request or business event
+    App->>Core: Validate identity, scope, and business rules
+    Core->>Core: Evaluate state and authorization
+    Core->>Audit: Persist decision and correlation reference
+    Core->>External: Send authorized request when required
+    External-->>Core: Return result or asynchronous event
+    Core->>Core: Validate response and apply allowed transition
+    Core->>Audit: Record outcome and processing status
+    Core-->>App: Return current status and next action
+    App-->>User: Show outcome or actionable exception
 ```
 
+## 7. Business rules
+
+| ID | Rule |
+|---|---|
+| BR-001 | A transfer has a unique ID, source, destination, and approved line quantities. |
+| BR-002 | Dispatch reduces origin available stock and creates in-transit balance; it does not increase destination stock. |
+| BR-003 | Custody changes only when parties record handover evidence required by policy. |
+| BR-004 | Seal IDs and package counts are evidence, not proof by themselves that contents are correct. |
+| BR-005 | Destination records actual received quantity independently of dispatched quantity. |
+| BR-006 | Shortages, overages, and damage remain discrepancy cases until investigated and approved. |
+| BR-007 | No automatic staff, driver, or branch liability may be assigned solely from a quantity variance. |
+| BR-008 | Inventory adjustment requires approval, reason code, evidence, and immutable audit history. |
+
+Policy-dependent rules must be confirmed by the process owner and recorded with an effective date or version before implementation.
+
+## 8. Data requirements
+
+| Entity | Minimum fields |
+|---|---|
+| TransferHeader | transfer_id, source_location, destination_location, status, requested_by |
+| TransferLine | sku, requested_qty, approved_qty, dispatched_qty, received_qty |
+| Package | package_id, seal_id, weight, photo_refs, condition |
+| CustodyEvent | transfer_id, from_party, to_party, accepted_at, evidence_ref |
+| TransitBalance | transfer_id, sku, quantity, status |
+| DiscrepancyCase | case_id, transfer_id, sku, variance_qty, reason, investigator, decision |
+| InventoryAdjustment | adjustment_id, sku, location, quantity, approval_id, reason |
+
+Use stable identifiers, explicit timestamps/time zones, currency and unit definitions where relevant, and versioned policy/rule references. Financial values must use integer minor units or fixed-precision decimal types, not binary floating-point arithmetic.
+
+## 9. State model
+
+The following is a lifecycle scaffold. Rename, add, or remove states to reflect the domain and define permitted transitions in the implementation specification.
+
+```mermaid
+stateDiagram-v2
+    [*] --> REQUESTED
+    REQUESTED --> VALIDATING
+    VALIDATING --> IN_PROGRESS: Valid
+    VALIDATING --> REJECTED: Invalid
+    IN_PROGRESS --> AWAITING_REVIEW: Exception or approval required
+    AWAITING_REVIEW --> IN_PROGRESS: Approved / retry permitted
+    AWAITING_REVIEW --> REJECTED: Declined
+    IN_PROGRESS --> COMPLETED: Success conditions met
+    REQUESTED --> CANCELLED: Authorized cancellation
+    COMPLETED --> [*]
+    REJECTED --> [*]
+    CANCELLED --> [*]
+```
+
+## 10. Exceptions and recovery
+
+| Scenario | Expected behavior and recovery |
+|---|---|
+| Seal broken or mismatched | Photograph and record condition; conduct witnessed opening and count. |
+| Quantity short | Receive actual quantity; keep difference in investigation status, not automatic expense assignment. |
+| Destination refuses delivery | Retain goods in transit/exception custody and record refusal reason. |
+| Carrier scan missing | Escalate custody gap and obtain alternate evidence before closing. |
+| System unavailable at handover | Use controlled offline manifest and reconcile both acknowledgements. |
+| Transfer cancelled after dispatch | Create return transfer or reversal movement; never delete dispatch history. |
+
+Every retryable action should define idempotency, retry limits, backoff, timeout, and manual escalation. Never treat an unknown external result as success.
+
+## 11. Authorization, privacy, and audit
+
+- Enforce permissions on the server/service boundary; hiding a button is not authorization.
+- Apply least privilege and separation of duties for sensitive approvals, financial actions, inventory adjustments, or account changes.
+- Record actor/service identity, timestamp, object ID, action, prior and new state, reason, correlation ID, and external reference where applicable.
+- Protect personal and commercially sensitive data through purpose limitation, access control, retention, and secure evidence storage.
+- Preserve history through append-only events or controlled reversals; do not silently overwrite material decisions.
+
+## 12. Acceptance criteria
+
+- **AC-01:** Given a transfer is dispatched, when inventory is posted, then origin available stock decreases and equal in-transit quantity is created.
+- **AC-02:** Given destination receives fewer units than dispatched, when receipt is posted, then actual units enter destination stock and difference remains an open discrepancy.
+- **AC-03:** Given a seal is reported damaged, when receipt is recorded, then evidence and witnessed inspection are required before closure.
+- **AC-04:** Given a variance is unresolved, when adjustment is requested, then automatic liability assignment is prohibited and authorized review is required.
+
+## 13. Operational metrics
+
+- Transfer lead time by lane
+- Dispatch-to-receipt quantity variance rate
+- Transit inventory age
+- Discrepancy resolution time
+- Transfers with complete custody evidence
+
+Define numerator, denominator, source system, measurement window, owner, and baseline before setting targets. Metrics are measurement proposals, not promised improvements.
+
+## 14. Assumptions and open decisions
+
+- Custody and carrier liability depend on contract, insurance, local law, and evidence.
+- Cycle-count and adjustment approval thresholds must be configured.
+- Confirm role names, authority limits, thresholds, timeouts, retention, and escalation ownership with stakeholders.
+- Record unresolved decisions explicitly; do not silently convert assumptions into requirements.
+
+## 15. Traceability
+
+| Rule group | Acceptance criteria | Implementation evidence |
+|---|---|---|
+| BR-001 to BR-008 | AC-01 to AC-04 | Unit/integration tests, audit events, and process-owner sign-off |
+
 ---
 
-## 3. Checklist Aturan Sistem (Untuk Programmer & Tim Bisnis)
-
-* [ ] **Aturan Status 'In-Transit':** Barang yang keluar dari Toko A tidak boleh langsung dianggap "sudah sampai di Toko B". Wajib ada wadah status khusus *In-Transit Buffer* agar nilai aset perusahaan tidak hilang di laporan neraca harian.
-* [ ] **Aturan Segel Bernomor (Tamper-Evident Seal):** Setiap kardus transfer wajib memiliki nomor segel pengaman. Jika nomor segel saat sampai di Toko B tidak cocok dengan nomor segel yang diinput Toko A, sistem otomatis membunyikan alarm audit investigasi.
-* [ ] **Tanda Tangan Digital Driver:** Driver pengirim wajib melakukan konfirmasi serah terima di aplikasi sebelum meninggalkan Toko Asal, sehingga titik pertanggungjawaban hukum barang jelas.
-
----
-
-## 4. Dampak Operasional bagi Bisnis
-
-* **Nol Perselisihan Antar Toko Cabang:** Tidak ada lagi drama saling tuduh antar kepala cabang, karena titik kebocoran barang terlacak dengan bukti digital segel dan barcode.
-* **Pertanggungjawaban Finansial Akurat:** Jika barang hilang karena dicuri sopir di jalan, kerugian otomatis dibebankan ke vendor ekspedisi atau klaim asuransi pengiriman secara otomatis.
+**Validation note:** This is a reusable reference pattern, not an approved policy for every organization. Confirm assumptions and provider-specific behavior before implementation.

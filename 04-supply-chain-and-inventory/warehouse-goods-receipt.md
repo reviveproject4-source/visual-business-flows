@@ -1,42 +1,204 @@
-# Inbound Warehouse Receiving & Quality Control (QC) Flow
+# Warehouse Goods Receipt and Quality Inspection
 
-> **Domain:** Warehouse Management System (WMS), Supply Chain, Logistics  
-> **Key Objective:** Inspect inbound deliveries, reconcile against Purchase Orders (PO), quarantine damaged goods, and update available inventory.
+> **Domain:** Warehouse operations, WMS, procurement  
+> **Document type:** To-Be reference workflow  
+> **Status:** Reference design — validate with process owners before implementation  
+> **Audience:** Business Analysts, Systems Analysts, product teams, and developers
 
----
+## 1. Problem statement
 
-## 1. Process Sequence Flow
+Goods may arrive in quantities or condition different from the purchase order. If inventory is available before verification, the business may sell damaged, expired, or unaccepted goods.
+
+## 2. Objective and scope
+
+**Objective:** Record physical receipt against an authorized purchase order, segregate exceptions, and release only accepted quantities to available inventory.
+
+**In scope**
+- Operational lifecycle from initiation through resolution and recordkeeping.
+- Business decisions, system responsibilities, exception handling, and audit evidence.
+- Minimum data and acceptance criteria needed for implementation planning.
+
+**Out of scope**
+- Organization-specific legal, tax, accounting, labor, or contractual conclusions.
+- Fixed thresholds, fees, SLA targets, or financial outcomes not validated by the organization.
+- Vendor-specific API contracts unless documented by the selected provider.
+
+## 3. Actors and systems
+
+| Actor / system | Responsibility |
+|---|---|
+| Supplier driver | Delivers goods and documents |
+| Receiving operator | Checks shipment identity and counts goods |
+| Quality inspector | Inspects condition, batch, and expiry |
+| Warehouse supervisor | Resolves discrepancies and approves exceptions |
+| WMS / inventory ledger | Records receipt and stock status |
+| Procurement / finance | Reconciles PO and supplier invoice |
+
+## 4. Trigger, preconditions, and postconditions
+
+**Trigger:** A valid business event or authorized user action initiates the workflow.
+
+**Preconditions**
+- Initiating actor or service is authenticated.
+- Required master data, policy versions, and reference records are available.
+- Requested object is in a state that permits the operation.
+- Required permissions and segregation-of-duty controls are configured.
+
+**Postconditions**
+- Business object has an explicit final or pending status.
+- Material decisions, external references, and exceptions are traceable.
+- Related financial, inventory, customer, or access records are synchronized or visibly pending.
+
+## 5. Business process view
+
+This flow describes the human and organizational process, independent of a specific application architecture.
+
+```mermaid
+flowchart TD
+    Start([Trigger]) --> S1
+    S1[Identify delivery and locate authorized PO]
+    S2[Verify supplier, shipment, SKU, lot, and expected quantities]
+    S3[Unload into receiving or inspection area]
+    S4[Count physical units and record discrepancy by line]
+    S5[Inspect quality, damage, expiry, and required certificates]
+    S6[Accept, quarantine, reject, or partially accept quantities]
+    S7[Post accepted quantity to correct stock status and location]
+    S8[Create supplier claim or PO discrepancy case]
+    S9[Reconcile receipt against PO and invoice]
+    S1 --> S2
+    S2 --> S3
+    S3 --> S4
+    S4 --> S5
+    S5 --> S6
+    S6 --> S7
+    S7 --> S8
+    S8 --> S9
+    S9 --> End([Outcome])
+```
+
+## 6. System interaction view
+
+This logical sequence shows system responsibilities. Adapt participants and messages to the selected architecture and provider contract.
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Driver as Supplier Delivery Driver
-    actor Receiver as Warehouse Inbound Staff
-    participant WMS as Warehouse Management System
-    participant QC as Quality Control Inspector
-    participant InventoryDB as Inventory Database
-
-    Driver->>Receiver: Arrives with Shipment & Physical Delivery Order (DO)
-    Receiver->>WMS: Scan PO Barcode on delivery document
-    WMS-->>Receiver: Display Expected Items, Batch Numbers, and Quantities
-    
-    Receiver->>Receiver: Unload Pallets & Perform Physical Count
-    alt Quantity Discrepancy (Missing / Short-shipped items)
-        Receiver->>WMS: Log Shortage Exception: "Received 80 of 100 units"
-        Receiver->>Driver: Endorse DO with "Discrepancy Verified" signature
-    end
-
-    Receiver->>QC: Submit Batch for Quality Control Inspection
-    QC->>QC: Inspect sample packaging, expiry dates, and product integrity
-    
-    alt Defect / Spoilage Detected
-        QC->>WMS: Flag Defective Items to "Quarantine Buffer"
-        WMS->>WMS: Auto-generate Supplier Return Material Authorization (RMA)
-        WMS-->>Receiver: Print Quarantine Labels (Red Tag)
-    else Passed Inspection
-        QC->>WMS: Approve Batch Inspection
-        WMS->>WMS: Assign Warehouse Bin / Rack Location (e.g. Rack-B-04)
-        WMS->>InventoryDB: Increment Active Available Stock
-        WMS-->>Receiver: Print Put-away Barcode Slip
-    end
+    actor User as Business actor
+    participant App as Business application
+    participant Core as Domain service
+    participant External as External system
+    participant Audit as Audit/event store
+    User->>App: Submit request or business event
+    App->>Core: Validate identity, scope, and business rules
+    Core->>Core: Evaluate state and authorization
+    Core->>Audit: Persist decision and correlation reference
+    Core->>External: Send authorized request when required
+    External-->>Core: Return result or asynchronous event
+    Core->>Core: Validate response and apply allowed transition
+    Core->>Audit: Record outcome and processing status
+    Core-->>App: Return current status and next action
+    App-->>User: Show outcome or actionable exception
 ```
+
+## 7. Business rules
+
+| ID | Rule |
+|---|---|
+| BR-001 | A receipt must reference an authorized PO or documented exception. |
+| BR-002 | Received, accepted, quarantined, and rejected quantities are recorded separately. |
+| BR-003 | Available stock increases only for accepted quantities placed in an approved location. |
+| BR-004 | Lot, serial, expiry, and traceability attributes are mandatory where product policy requires them. |
+| BR-005 | Over-receipt tolerance is configured per supplier/SKU and not assumed. |
+| BR-006 | Receiver and quality approver duties should be separated for controlled products where feasible. |
+| BR-007 | Receipt corrections use reversal or adjustment events with reason and approval. |
+| BR-008 | Supplier invoice matching uses ordered, received, and invoiced quantities under configured tolerance. |
+
+Policy-dependent rules must be confirmed by the process owner and recorded with an effective date or version before implementation.
+
+## 8. Data requirements
+
+| Entity | Minimum fields |
+|---|---|
+| PurchaseOrder | po_id, supplier_id, sku, ordered_qty, tolerance, expected_date |
+| GoodsReceipt | receipt_id, po_id, received_by, received_at, status |
+| ReceiptLine | sku, received_qty, accepted_qty, rejected_qty, discrepancy_code |
+| Inspection | lot, serial, expiry, condition, inspector_id, evidence |
+| InventoryMovement | sku, location, stock_status, quantity, source_receipt |
+| SupplierClaim | claim_id, po_id, receipt_id, reason, status, resolution |
+
+Use stable identifiers, explicit timestamps/time zones, currency and unit definitions where relevant, and versioned policy/rule references. Financial values must use integer minor units or fixed-precision decimal types, not binary floating-point arithmetic.
+
+## 9. State model
+
+The following is a lifecycle scaffold. Rename, add, or remove states to reflect the domain and define permitted transitions in the implementation specification.
+
+```mermaid
+stateDiagram-v2
+    [*] --> REQUESTED
+    REQUESTED --> VALIDATING
+    VALIDATING --> IN_PROGRESS: Valid
+    VALIDATING --> REJECTED: Invalid
+    IN_PROGRESS --> AWAITING_REVIEW: Exception or approval required
+    AWAITING_REVIEW --> IN_PROGRESS: Approved / retry permitted
+    AWAITING_REVIEW --> REJECTED: Declined
+    IN_PROGRESS --> COMPLETED: Success conditions met
+    REQUESTED --> CANCELLED: Authorized cancellation
+    COMPLETED --> [*]
+    REJECTED --> [*]
+    CANCELLED --> [*]
+```
+
+## 10. Exceptions and recovery
+
+| Scenario | Expected behavior and recovery |
+|---|---|
+| No matching PO | Hold goods in receiving exception area pending procurement authorization. |
+| Short or over delivery | Record actual quantity and require PO discrepancy resolution. |
+| Damaged or expired goods | Quarantine and block availability; initiate supplier claim or rejection. |
+| Lot or serial mismatch | Stop put-away until traceability is resolved. |
+| WMS unavailable | Use controlled offline receipt records and reconcile before stock release. |
+| Invoice quantity differs | Route to three-way match exception; do not alter receipt to force match. |
+
+Every retryable action should define idempotency, retry limits, backoff, timeout, and manual escalation. Never treat an unknown external result as success.
+
+## 11. Authorization, privacy, and audit
+
+- Enforce permissions on the server/service boundary; hiding a button is not authorization.
+- Apply least privilege and separation of duties for sensitive approvals, financial actions, inventory adjustments, or account changes.
+- Record actor/service identity, timestamp, object ID, action, prior and new state, reason, correlation ID, and external reference where applicable.
+- Protect personal and commercially sensitive data through purpose limitation, access control, retention, and secure evidence storage.
+- Preserve history through append-only events or controlled reversals; do not silently overwrite material decisions.
+
+## 12. Acceptance criteria
+
+- **AC-01:** Given goods arrive without a valid PO, when receiving is attempted, then stock is held in exception status and not made available.
+- **AC-02:** Given inspection rejects part of a delivery, when receipt is posted, then only accepted quantity becomes available.
+- **AC-03:** Given required lot or expiry data is missing, when put-away is attempted, then validation blocks release.
+- **AC-04:** Given WMS is offline, when an offline receipt is recorded, then it remains non-available until reconciliation completes.
+
+## 13. Operational metrics
+
+- Dock-to-stock time
+- Receipt accuracy against PO
+- Quarantine and rejection rate
+- Supplier on-time/in-full performance
+- Three-way match exception rate
+
+Define numerator, denominator, source system, measurement window, owner, and baseline before setting targets. Metrics are measurement proposals, not promised improvements.
+
+## 14. Assumptions and open decisions
+
+- Inspection plans, expiry rules, over-receipt tolerances, and quarantine disposition depend on product category and regulation.
+- Offline receipt must follow documented local control and reconciliation procedure.
+- Confirm role names, authority limits, thresholds, timeouts, retention, and escalation ownership with stakeholders.
+- Record unresolved decisions explicitly; do not silently convert assumptions into requirements.
+
+## 15. Traceability
+
+| Rule group | Acceptance criteria | Implementation evidence |
+|---|---|---|
+| BR-001 to BR-008 | AC-01 to AC-04 | Unit/integration tests, audit events, and process-owner sign-off |
+
+---
+
+**Validation note:** This is a reusable reference pattern, not an approved policy for every organization. Confirm assumptions and provider-specific behavior before implementation.
