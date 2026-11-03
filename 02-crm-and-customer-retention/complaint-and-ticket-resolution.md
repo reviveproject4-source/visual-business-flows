@@ -194,7 +194,12 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - Customer satisfaction by resolution type
 - Recurring root causes by product/channel
 
-Define numerator, denominator, source system, measurement window, owner, and baseline before setting targets. Metrics are measurement proposals, not promised improvements.
+- **First response time:** first human response timestamp minus ticket-created timestamp; report median and P90.
+- **Resolution time:** resolved timestamp minus ticket-created timestamp, excluding only documented paused intervals.
+- **SLA attainment:** tickets meeting the applicable response/resolution SLA ÷ eligible tickets.
+- **Reopen rate:** tickets reopened within the defined observation window ÷ resolved tickets. Review weekly by category and severity.
+
+Assign a named metric owner, reporting window, and baseline before setting a target. These are measurement definitions, not promised improvements.
 
 ## 14. Assumptions and open decisions
 
