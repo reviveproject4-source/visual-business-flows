@@ -35,13 +35,14 @@ Complaints can be lost across channels, assigned without ownership, or closed be
 
 ## 4. Trigger, preconditions, and postconditions
 
-**Trigger:** A valid business event or authorized user action initiates the workflow.
+**Trigger:** A complaint or support request is received through an enabled customer channel and a ticket is created or matched.
 
 **Preconditions**
-- Initiating actor or service is authenticated.
-- Required master data, policy versions, and reference records are available.
-- Requested object is in a state that permits the operation.
-- Required permissions and segregation-of-duty controls are configured.
+- Customer/requester identity and affected order, account, or service reference are captured where applicable.
+- Ticket categories, severity definitions, routing rules, and support hours are configured.
+- SLA clocks, pause conditions, escalation ownership, and communication channels are defined.
+- Evidence attachments have access and retention controls.
+- Duplicate-ticket matching and reopen rules are available.
 
 **Postconditions**
 - Business object has an explicit final or pending status.
@@ -137,7 +138,7 @@ Use stable identifiers, explicit timestamps/time zones, currency and unit defini
 
 ## 9. State model
 
-The following is a lifecycle scaffold. Rename, add, or remove states to reflect the domain and define permitted transitions in the implementation specification.
+The state names and transitions below describe the proposed lifecycle for this workflow. Confirm guards, role permissions, timeout transitions, and terminal-state behavior with the process owner and implementation team before production use.
 
 ```mermaid
 stateDiagram-v2
