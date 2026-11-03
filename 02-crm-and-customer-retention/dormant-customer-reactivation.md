@@ -221,13 +221,13 @@ Assign a named metric owner, reporting window, and baseline before setting a tar
 
 | Business rule | Acceptance criterion | Verification focus |
 |---|---|---|
-| BR-001 | AC-05 | Requirement and test coverage for the rule |
-| BR-002 | AC-01 | Requirement and test coverage for the rule |
-| BR-003 | AC-03 | Requirement and test coverage for the rule |
-| BR-004 | AC-04 | Requirement and test coverage for the rule |
-| BR-005 | AC-02 | Requirement and test coverage for the rule |
-| BR-006 | AC-06 | Requirement and test coverage for the rule |
-| BR-007 | AC-07 | Requirement and test coverage for the rule |
+| BR-001 | AC-05 | the configured category-specific inactivity threshold and qualifying-activity definition are applied |
+| BR-002 | AC-01 | the customer is excluded |
+| BR-003 | AC-03 | only one logical message is created |
+| BR-004 | AC-04 | redemption is rejected |
+| BR-005 | AC-02 | the pending message is cancelled |
+| BR-006 | AC-06 | delivery, click, redemption, and incremental outcomes are reported as separate measures |
+| BR-007 | AC-07 | the attribute is not inferred or used for targeting |
 
 ---
 
