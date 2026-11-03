@@ -36,13 +36,14 @@ Orders across channels can become inconsistent across payment, stock reservation
 
 ## 4. Trigger, preconditions, and postconditions
 
-**Trigger:** A valid business event or authorized user action initiates the workflow.
+**Trigger:** A customer submits an order and the order service accepts it for validation.
 
 **Preconditions**
-- Initiating actor or service is authenticated.
-- Required master data, policy versions, and reference records are available.
-- Requested object is in a state that permits the operation.
-- Required permissions and segregation-of-duty controls are configured.
+- The customer/order reference is valid and the requested items are identifiable.
+- Product price, tax, fulfillment, and cancellation policies have an effective version.
+- Inventory availability can be checked or a backorder/substitution policy is defined.
+- Delivery or pickup method and destination are captured where fulfillment requires them.
+- Payment authorization/capture timing and reservation-expiry rules are defined.
 
 **Postconditions**
 - Business object has an explicit final or pending status.
@@ -149,7 +150,7 @@ Use stable identifiers, explicit timestamps/time zones, currency and unit defini
 
 ## 9. State model
 
-The following is a lifecycle scaffold. Rename, add, or remove states to reflect the domain and define permitted transitions in the implementation specification.
+The state names and transitions below describe the proposed lifecycle for this workflow. Confirm guards, role permissions, timeout transitions, and terminal-state behavior with the process owner and implementation team before production use.
 
 ```mermaid
 stateDiagram-v2
