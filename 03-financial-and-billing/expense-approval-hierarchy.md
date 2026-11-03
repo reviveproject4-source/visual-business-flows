@@ -78,7 +78,7 @@ flowchart TD
 
 ## 6. System interaction view
 
-This logical sequence shows system responsibilities. Adapt participants and messages to the selected architecture and provider contract.
+The sequence models expense submission, evidence and duplicate checks, budget validation, delegation-of-authority routing, reapproval after material change, and accounts-payable handoff.
 
 ```mermaid
 sequenceDiagram
