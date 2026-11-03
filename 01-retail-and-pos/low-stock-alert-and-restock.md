@@ -70,9 +70,9 @@ flowchart TD
     K -->|No| I
     K -->|Yes| L[Issue PO with unique reference]
     L --> M{Supplier acknowledges?}
-    M -->|No| N[Escalate supplier exception; do not duplicate PO]
+    M -->|No| N[Escalate supplier exception, do not duplicate PO]
     M -->|Yes| O[Receive and inspect shipment]
-    O --> P[Post accepted units; quarantine discrepancies]
+    O --> P[Post accepted units, quarantine discrepancies]
     P --> Q[Reconcile PO and inventory position]
     Q --> R([Close replenishment task])
 ```
