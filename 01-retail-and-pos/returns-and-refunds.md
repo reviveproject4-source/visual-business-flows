@@ -80,21 +80,34 @@ This logical sequence shows system responsibilities. Adapt participants and mess
 ```mermaid
 sequenceDiagram
     autonumber
-    actor User as Business actor
-    participant App as Business application
-    participant Core as Domain service
-    participant External as External system
-    participant Audit as Audit/event store
-    User->>App: Submit request or business event
-    App->>Core: Validate identity, scope, and business rules
-    Core->>Core: Evaluate state and authorization
-    Core->>Audit: Persist decision and correlation reference
-    Core->>External: Send authorized request when required
-    External-->>Core: Return result or asynchronous event
-    Core->>Core: Validate response and apply allowed transition
-    Core->>Audit: Record outcome and processing status
-    Core-->>App: Return current status and next action
-    App-->>User: Show outcome or actionable exception
+    actor Customer
+    actor Agent
+    participant Returns as Returns Service
+    participant Sales as Sales/POS
+    participant Stock as Inventory
+    participant Pay as Payment Provider
+    participant Audit
+    Customer->>Agent: Request return or exchange
+    Agent->>Returns: Register item, quantity, reason, and evidence
+    Returns->>Sales: Verify original sale and prior returns
+    Sales-->>Returns: Purchase and return eligibility
+    alt Ineligible or duplicate return
+        Returns-->>Agent: Reject with reason and audit reference
+    else Eligible
+        Agent->>Returns: Record inspection and condition
+        Returns->>Returns: Determine disposition and required approval
+        opt Approval required
+            Returns-->>Agent: Route for authorized decision
+            Agent->>Returns: Submit approval outcome
+        end
+        Returns->>Pay: Request refund when approved and supported
+        Pay-->>Returns: Refund result or pending reference
+        Returns->>Stock: Post physically received units to disposition status
+        Stock-->>Returns: Inventory posting reference
+        Returns->>Audit: Record decision, refund, stock, and evidence references
+        Returns-->>Agent: Return case status
+    end
+    Agent-->>Customer: Communicate outcome
 ```
 
 ## 7. Business rules
@@ -131,17 +144,21 @@ The following is a lifecycle scaffold. Rename, add, or remove states to reflect 
 ```mermaid
 stateDiagram-v2
     [*] --> REQUESTED
-    REQUESTED --> VALIDATING
-    VALIDATING --> IN_PROGRESS: Valid
-    VALIDATING --> REJECTED: Invalid
-    IN_PROGRESS --> AWAITING_REVIEW: Exception or approval required
-    AWAITING_REVIEW --> IN_PROGRESS: Approved / retry permitted
-    AWAITING_REVIEW --> REJECTED: Declined
-    IN_PROGRESS --> COMPLETED: Success conditions met
-    REQUESTED --> CANCELLED: Authorized cancellation
-    COMPLETED --> [*]
+    REQUESTED --> ELIGIBILITY_CHECK
+    ELIGIBILITY_CHECK --> REJECTED: Outside policy or duplicate
+    ELIGIBILITY_CHECK --> AWAITING_RECEIPT: Eligible
+    AWAITING_RECEIPT --> INSPECTION
+    INSPECTION --> APPROVAL_PENDING: Approval required
+    INSPECTION --> DISPOSITION_PENDING: Within authority
+    APPROVAL_PENDING --> DISPOSITION_PENDING: Approved
+    APPROVAL_PENDING --> REJECTED: Declined
+    DISPOSITION_PENDING --> REFUND_PENDING: Refund or credit approved
+    REFUND_PENDING --> REFUND_FAILED: Provider rejects
+    REFUND_FAILED --> REFUND_PENDING: Safe retry or manual resolution
+    REFUND_PENDING --> INVENTORY_PENDING: Financial result recorded
+    INVENTORY_PENDING --> COMPLETED: Stock disposition posted
     REJECTED --> [*]
-    CANCELLED --> [*]
+    COMPLETED --> [*]
 ```
 
 ## 10. Exceptions and recovery
