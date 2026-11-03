@@ -200,6 +200,9 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - **AC-02:** Given an ID token has invalid issuer, audience, signature, expiry, or nonce, when validated, then account creation and session issuance are blocked.
 - **AC-03:** Given an email matches an existing user but provider subject is not linked, when sign-in occurs, then automatic account linking is not performed.
 - **AC-04:** Given a user has no tenant membership, when accessing tenant resources, then authorization denies access despite successful authentication.
+- **AC-05:** Given a public client starts Google sign-in, when authorization is initiated, then PKCE is used and no client secret is exposed in browser/mobile code.
+- **AC-06:** Given a callback contains an unregistered redirect URI or untrusted return URL, when processed, then the request is rejected.
+- **AC-07:** Given a session is issued, when it expires, rotates, or is revoked, then secure storage/cookie controls and session lifecycle rules are enforced.
 
 ## 13. Operational metrics
 
@@ -225,9 +228,16 @@ Assign a named metric owner, reporting window, and baseline before setting a tar
 
 ## 15. Traceability
 
-| Rule group | Acceptance criteria | Implementation evidence |
+| Business rule | Acceptance criterion | Verification focus |
 |---|---|---|
-| BR-001 to BR-008 | AC-01 to AC-04 | Unit/integration tests, audit events, and process-owner sign-off |
+| BR-001 | AC-05 | Requirement and test coverage for the rule |
+| BR-002 | AC-01 | Requirement and test coverage for the rule |
+| BR-003 | AC-02 | Requirement and test coverage for the rule |
+| BR-004 | AC-03 | Requirement and test coverage for the rule |
+| BR-005 | AC-03 | Requirement and test coverage for the rule |
+| BR-006 | AC-04 | Requirement and test coverage for the rule |
+| BR-007 | AC-06 | Requirement and test coverage for the rule |
+| BR-008 | AC-07 | Requirement and test coverage for the rule |
 
 ---
 
