@@ -80,7 +80,7 @@ flowchart TD
 
 ## 6. System interaction view
 
-This logical sequence shows system responsibilities. Adapt participants and messages to the selected architecture and provider contract.
+The sequence models transfer authorization, origin reservation/dispatch, in-transit custody, destination independent count, discrepancy case management, and controlled inventory adjustment.
 
 ```mermaid
 sequenceDiagram
