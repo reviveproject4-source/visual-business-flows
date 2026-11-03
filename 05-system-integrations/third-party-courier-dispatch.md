@@ -82,21 +82,28 @@ This logical sequence shows system responsibilities. Adapt participants and mess
 ```mermaid
 sequenceDiagram
     autonumber
-    actor User as Business actor
-    participant App as Business application
-    participant Core as Domain service
-    participant External as External system
-    participant Audit as Audit/event store
-    User->>App: Submit request or business event
-    App->>Core: Validate identity, scope, and business rules
-    Core->>Core: Evaluate state and authorization
-    Core->>Audit: Persist decision and correlation reference
-    Core->>External: Send authorized request when required
-    External-->>Core: Return result or asynchronous event
-    Core->>Core: Validate response and apply allowed transition
-    Core->>Audit: Record outcome and processing status
-    Core-->>App: Return current status and next action
-    App-->>User: Show outcome or actionable exception
+    actor Operator
+    participant Order
+    participant Dispatch as Dispatch Service
+    participant Courier as Courier API
+    participant Webhook as Courier Webhook
+    participant Tracking
+    participant Audit
+    Operator->>Dispatch: Request shipment booking
+    Dispatch->>Order: Validate order, package, address, and readiness
+    Order-->>Dispatch: Shipment data and fulfillment status
+    Dispatch->>Courier: Create booking with idempotency reference
+    Courier-->>Dispatch: Booking ID, service, and ETA
+    Dispatch->>Tracking: Store booking and expected milestones
+    Courier->>Webhook: Send assignment and status events
+    Webhook->>Webhook: Authenticate, deduplicate, and order event
+    Webhook->>Tracking: Apply valid tracking transition
+    Courier-->>Operator: Driver arrives for pickup
+    Operator->>Dispatch: Verify driver and record package handover
+    Dispatch->>Audit: Record custody evidence
+    Courier->>Webhook: Send delivery or failure proof
+    Webhook->>Tracking: Reconcile final shipment status
+    Tracking->>Order: Publish delivered, failed, or returned outcome
 ```
 
 ## 7. Business rules
@@ -133,18 +140,24 @@ The following is a lifecycle scaffold. Rename, add, or remove states to reflect 
 
 ```mermaid
 stateDiagram-v2
-    [*] --> REQUESTED
-    REQUESTED --> VALIDATING
-    VALIDATING --> IN_PROGRESS: Valid
-    VALIDATING --> REJECTED: Invalid
-    IN_PROGRESS --> AWAITING_REVIEW: Exception or approval required
-    AWAITING_REVIEW --> IN_PROGRESS: Approved / retry permitted
-    AWAITING_REVIEW --> REJECTED: Declined
-    IN_PROGRESS --> COMPLETED: Success conditions met
-    REQUESTED --> CANCELLED: Authorized cancellation
-    COMPLETED --> [*]
-    REJECTED --> [*]
-    CANCELLED --> [*]
+    [*] --> BOOKING_REQUESTED
+    BOOKING_REQUESTED --> BOOKED: Provider confirms booking
+    BOOKING_REQUESTED --> BOOKING_FAILED: Provider rejects or times out
+    BOOKING_FAILED --> BOOKING_REQUESTED: Safe retry after status check
+    BOOKED --> DRIVER_ASSIGNED
+    DRIVER_ASSIGNED --> PICKUP_PENDING
+    PICKUP_PENDING --> IN_TRANSIT: Driver and package handover verified
+    PICKUP_PENDING --> PICKUP_EXCEPTION: No-show or package mismatch
+    PICKUP_EXCEPTION --> DRIVER_ASSIGNED: Reassignment
+    IN_TRANSIT --> DELIVERED: Valid proof accepted
+    IN_TRANSIT --> DELIVERY_FAILED: Failed attempt
+    DELIVERY_FAILED --> REDELIVERY_PENDING: Retry authorized
+    REDELIVERY_PENDING --> IN_TRANSIT
+    DELIVERY_FAILED --> RETURN_PENDING: Return authorized
+    RETURN_PENDING --> RETURNED
+    DELIVERED --> RECONCILED
+    RETURNED --> RECONCILED
+    RECONCILED --> [*]
 ```
 
 ## 10. Exceptions and recovery
