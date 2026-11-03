@@ -54,27 +54,25 @@ This flow describes the human and organizational process, independent of a speci
 
 ```mermaid
 flowchart TD
-    Start([Trigger]) --> S1
-    S1[Calculate stock age and sales velocity using agreed definitions]
-    S2[Flag SKUs or lots for review]
-    S3[Validate system quantity with cycle count where risk warrants]
-    S4[Assess expiry, condition, seasonality, demand, and replenishment status]
-    S5[Compare transfer, markdown, supplier return, bundle, donation, or write-off options]
-    S6[Model margin and financial impact]
-    S7[Obtain approval for selected action]
-    S8[Execute price or inventory movement with effective date and scope]
-    S9[Monitor sell-through and residual stock]
-    S10[Close review with realized outcome and audit evidence]
-    S1 --> S2
-    S2 --> S3
-    S3 --> S4
-    S4 --> S5
-    S5 --> S6
-    S6 --> S7
-    S7 --> S8
-    S8 --> S9
-    S9 --> S10
-    S10 --> End([Outcome])
+    A([Scheduled stock review]) --> B[Calculate stock age and sales velocity]
+    B --> C{SKU/lot meets review criteria?}
+    C -->|No| Z[Retain normal monitoring]
+    C -->|Yes| D[Verify physical quantity, condition, and expiry]
+    D --> E{Candidate confirmed?}
+    E -->|No| Z
+    E -->|Yes| F[Compare transfer, markdown, return, bundle, donation, or write-off]
+    F --> G[Model margin and financial impact]
+    G --> H[Obtain approval for selected action]
+    H --> I{Approved?}
+    I -->|No| J[Record rejection and retain stock]
+    I -->|Yes| K[Execute effective-dated price or inventory movement]
+    K --> L[Monitor sell-through and residual stock]
+    L --> M{Residual stock remains?}
+    M -->|Yes| F
+    M -->|No| N[Record realized outcome and close review]
+    J --> N
+    Z --> N
+    N --> O([Complete review])
 ```
 
 ## 6. System interaction view
