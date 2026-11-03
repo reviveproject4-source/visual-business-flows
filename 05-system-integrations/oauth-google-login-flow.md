@@ -36,13 +36,14 @@ Social sign-in can expose accounts to takeover or incorrect account linking when
 
 ## 4. Trigger, preconditions, and postconditions
 
-**Trigger:** A valid business event or authorized user action initiates the workflow.
+**Trigger:** A user selects Google sign-in or starts an explicitly authorized Google account-linking action.
 
 **Preconditions**
-- Initiating actor or service is authenticated.
-- Required master data, policy versions, and reference records are available.
-- Requested object is in a state that permits the operation.
-- Required permissions and segregation-of-duty controls are configured.
+- OAuth client, exact redirect URI, allowed origins, and OIDC discovery/JWKS configuration are registered.
+- Authorization Code Flow with PKCE is supported and state/nonce lifetimes are defined.
+- Client ID, requested scopes, consent behavior, and account-linking policy are configured.
+- Tenant invitation/signup rules and least-privilege role assignment are enforced by the backend.
+- Session issuance, rotation, expiry, revocation, and secure cookie/storage controls are defined.
 
 **Postconditions**
 - Business object has an explicit final or pending status.
@@ -144,7 +145,7 @@ Use stable identifiers, explicit timestamps/time zones, currency and unit defini
 
 ## 9. State model
 
-The following is a lifecycle scaffold. Rename, add, or remove states to reflect the domain and define permitted transitions in the implementation specification.
+The state names and transitions below describe the proposed lifecycle for this workflow. Confirm guards, role permissions, timeout transitions, and terminal-state behavior with the process owner and implementation team before production use.
 
 ```mermaid
 stateDiagram-v2
