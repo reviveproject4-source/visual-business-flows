@@ -47,7 +47,7 @@ The repository currently contains **16 workflow files across five domains**.
 | Workflow | Focus |
 |---|---|
 | [Dormant customer reactivation](./02-crm-and-customer-retention/dormant-customer-reactivation.md) | Inactivity identification and win-back |
-| [Customer loyalty enrollment and tier management](./02-crm-and-customer-retention/customer-loyalty-enrollment.md) | Registration and activation |
+| [Customer loyalty enrollment and tier management](./02-crm-and-customer-retention/customer-loyalty-enrollment.md) | Enrollment, consent, points, and tier qualification |
 | [Complaint and ticket resolution](./02-crm-and-customer-retention/complaint-and-ticket-resolution.md) | Triage, escalation, and resolution |
 
 ### 3. Financial and billing
