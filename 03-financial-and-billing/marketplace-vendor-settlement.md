@@ -35,13 +35,14 @@ Marketplace orders may involve multiple vendors, platform fees, refunds, dispute
 
 ## 4. Trigger, preconditions, and postconditions
 
-**Trigger:** A valid business event or authorized user action initiates the workflow.
+**Trigger:** An order reaches its configured release milestone and eligible funds are held for settlement.
 
 **Preconditions**
-- Initiating actor or service is authenticated.
-- Required master data, policy versions, and reference records are available.
-- Requested object is in a state that permits the operation.
-- Required permissions and segregation-of-duty controls are configured.
+- Order, buyer, vendor identities, and vendor allocation records are stable and auditable.
+- Provider confirms captured/held funds and supports the configured marketplace/escrow arrangement.
+- Split amounts, fees, taxes, reserves, and rounding rules are versioned.
+- Delivery/acceptance evidence and dispute/chargeback status are available.
+- Release, hold, reversal, and manual-review permissions are separated.
 
 **Postconditions**
 - Business object has an explicit final or pending status.
@@ -57,7 +58,7 @@ flowchart TD
     A([Multi-vendor order accepted]) --> B[Map order lines to vendors and calculate fee basis]
     B --> C[Collect buyer payment]
     C --> D{Provider confirms collection?}
-    D -->|No| X[Keep unpaid; do not create payable]
+    D -->|No| X[Keep unpaid, do not create payable]
     D -->|Yes| E[Record gross collection and vendor ledger allocations]
     E --> F[Track fulfillment, returns, and disputes per order line]
     F --> G{Release conditions satisfied?}
@@ -78,7 +79,7 @@ flowchart TD
 
 ## 6. System interaction view
 
-This logical sequence shows system responsibilities. Adapt participants and messages to the selected architecture and provider contract.
+The sequence models order-line allocation, held-funds eligibility, fee/reserve calculation, release authorization, provider payout, ledger reversal, and settlement reconciliation.
 
 ```mermaid
 sequenceDiagram
@@ -140,7 +141,7 @@ Use stable identifiers, explicit timestamps/time zones, currency and unit defini
 
 ## 9. State model
 
-The following is a lifecycle scaffold. Rename, add, or remove states to reflect the domain and define permitted transitions in the implementation specification.
+The state names and transitions below describe the proposed lifecycle for this workflow. Confirm guards, role permissions, timeout transitions, and terminal-state behavior with the process owner and implementation team before production use.
 
 ```mermaid
 stateDiagram-v2
@@ -192,6 +193,8 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - **AC-02:** Given provider funds are unsettled, when payout eligibility is evaluated, then unsettled funds are excluded.
 - **AC-03:** Given a partial refund is approved, when ledger entries are created, then only affected allocation components are reversed.
 - **AC-04:** Given payout submission is retried, when the same batch key is used, then duplicate transfers are prevented or detected.
+- **AC-05:** Given a provider or contractual arrangement does not provide escrow, when the product describes the funds-holding flow, then it must not label the service as escrow.
+- **AC-06:** Given a vendor balance becomes negative after reversals, when settlement is evaluated, then the configured recovery/dispute policy is applied and no unsupported payout is created.
 
 ## 13. Operational metrics
 
@@ -201,7 +204,12 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - Unreconciled ledger balance by currency
 - Dispute and refund rate by vendor
 
-Define numerator, denominator, source system, measurement window, owner, and baseline before setting targets. Metrics are measurement proposals, not promised improvements.
+- **Settlement accuracy:** payouts matching approved allocation to the smallest currency unit ÷ completed payouts.
+- **Payout cycle time:** provider-confirmed payout timestamp minus release-eligible timestamp; report median and P90.
+- **Held-funds aging:** value and count of funds remaining held beyond the configured release window.
+- **Dispute hold rate:** orders placed on dispute hold ÷ orders eligible for settlement. Review daily with finance operations.
+
+Assign a named metric owner, reporting window, and baseline before setting a target. These are measurement definitions, not promised improvements.
 
 ## 14. Assumptions and open decisions
 
@@ -212,9 +220,16 @@ Define numerator, denominator, source system, measurement window, owner, and bas
 
 ## 15. Traceability
 
-| Rule group | Acceptance criteria | Implementation evidence |
+| Business rule | Acceptance criterion | Verification focus |
 |---|---|---|
-| BR-001 to BR-008 | AC-01 to AC-04 | Unit/integration tests, audit events, and process-owner sign-off |
+| BR-001 | AC-05 | it must not label the service as escrow |
+| BR-002 | AC-01 | each line is attributed to the correct vendor and fee rule version |
+| BR-003 | AC-01 | each line is attributed to the correct vendor and fee rule version |
+| BR-004 | AC-02 | unsettled funds are excluded |
+| BR-005 | AC-02 | unsettled funds are excluded |
+| BR-006 | AC-03 | only affected allocation components are reversed |
+| BR-007 | AC-04 | duplicate transfers are prevented or detected |
+| BR-008 | AC-06 | the configured recovery/dispute policy is applied and no unsupported payout is created |
 
 ---
 

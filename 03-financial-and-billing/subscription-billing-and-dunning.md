@@ -35,13 +35,14 @@ Recurring charges can fail because of expired credentials, insufficient funds, p
 
 ## 4. Trigger, preconditions, and postconditions
 
-**Trigger:** A valid business event or authorized user action initiates the workflow.
+**Trigger:** A subscription billing date, renewal event, or authorized plan change creates a billable invoice obligation.
 
 **Preconditions**
-- Initiating actor or service is authenticated.
-- Required master data, policy versions, and reference records are available.
-- Requested object is in a state that permits the operation.
-- Required permissions and segregation-of-duty controls are configured.
+- Subscription, customer/tenant, plan version, billing cadence, currency, and tax configuration are valid.
+- Entitlement and cancellation/effective-date rules are available.
+- A payment method or permitted manual collection route exists.
+- Retry schedule, grace period, suspension, and dunning communication rules are approved configuration.
+- Invoice numbering and accounting handoff requirements are defined.
 
 **Postconditions**
 - Business object has an explicit final or pending status.
@@ -76,7 +77,7 @@ flowchart TD
 
 ## 6. System interaction view
 
-This logical sequence shows system responsibilities. Adapt participants and messages to the selected architecture and provider contract.
+The sequence models subscription billing, invoice creation, payment-provider collection, webhook reconciliation, retry classification, dunning notices, and entitlement changes.
 
 ```mermaid
 sequenceDiagram
@@ -140,7 +141,7 @@ Use stable identifiers, explicit timestamps/time zones, currency and unit defini
 
 ## 9. State model
 
-The following is a lifecycle scaffold. Rename, add, or remove states to reflect the domain and define permitted transitions in the implementation specification.
+The state names and transitions below describe the proposed lifecycle for this workflow. Confirm guards, role permissions, timeout transitions, and terminal-state behavior with the process owner and implementation team before production use.
 
 ```mermaid
 stateDiagram-v2
@@ -190,6 +191,9 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - **AC-02:** Given a non-retryable decline occurs, when classified, then automatic retry stops and customer action is requested.
 - **AC-03:** Given a valid late-success event arrives, when processed, then invoice and entitlement are reconciled without duplicate posting.
 - **AC-04:** Given a duplicate webhook is delivered, when processed, then it has no duplicate financial or entitlement effect.
+- **AC-05:** Given retry, grace, or access restriction policy changes, when a billing attempt is evaluated, then the effective policy version is applied and recorded.
+- **AC-06:** Given a subscription is cancelled, when access termination is scheduled, then contract notice and data-retention rules determine the effective date and retained records.
+- **AC-07:** Given a payment update link is issued, when it is used after expiry or outside its scope, then it is rejected without exposing payment credentials.
 
 ## 13. Operational metrics
 
@@ -199,7 +203,12 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - Days sales outstanding for subscription invoices
 - Time from payment success to entitlement restoration
 
-Define numerator, denominator, source system, measurement window, owner, and baseline before setting targets. Metrics are measurement proposals, not promised improvements.
+- **Collection rate:** successfully collected amount ÷ amount due for the billing cohort.
+- **Dunning recovery rate:** failed invoices recovered within the configured dunning window ÷ invoices entering dunning.
+- **Involuntary churn rate:** subscriptions cancelled for non-payment ÷ subscriptions exposed to collection failure.
+- **Retry success rate:** successful retries ÷ total retry attempts. Review by plan, payment method, and failure code.
+
+Assign a named metric owner, reporting window, and baseline before setting a target. These are measurement definitions, not promised improvements.
 
 ## 14. Assumptions and open decisions
 
@@ -210,9 +219,16 @@ Define numerator, denominator, source system, measurement window, owner, and bas
 
 ## 15. Traceability
 
-| Rule group | Acceptance criteria | Implementation evidence |
+| Business rule | Acceptance criterion | Verification focus |
 |---|---|---|
-| BR-001 to BR-008 | AC-01 to AC-04 | Unit/integration tests, audit events, and process-owner sign-off |
+| BR-001 | AC-04 | it has no duplicate financial or entitlement effect |
+| BR-002 | AC-01 | provider status is checked before another charge is attempted |
+| BR-003 | AC-05 | the effective policy version is applied and recorded |
+| BR-004 | AC-02 | automatic retry stops and customer action is requested |
+| BR-005 | AC-03 | invoice and entitlement are reconciled without duplicate posting |
+| BR-006 | AC-03 | invoice and entitlement are reconciled without duplicate posting |
+| BR-007 | AC-06 | contract notice and data-retention rules determine the effective date and retained records |
+| BR-008 | AC-07 | it is rejected without exposing payment credentials |
 
 ---
 

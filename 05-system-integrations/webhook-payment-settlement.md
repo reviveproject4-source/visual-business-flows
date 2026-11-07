@@ -36,13 +36,14 @@ A provider may confirm payment while the merchant application is offline or webh
 
 ## 4. Trigger, preconditions, and postconditions
 
-**Trigger:** A valid business event or authorized user action initiates the workflow.
+**Trigger:** A payment provider sends an event to the merchant's registered webhook endpoint for a previously created payment intent or transaction reference.
 
 **Preconditions**
-- Initiating actor or service is authenticated.
-- Required master data, policy versions, and reference records are available.
-- Requested object is in a state that permits the operation.
-- Required permissions and segregation-of-duty controls are configured.
+- Merchant/provider account, endpoint, signing secret or verification key, and supported event schema are configured.
+- Payment intent and merchant reference are persisted before asynchronous callback processing.
+- Event identifiers, idempotency keys, and allowed payment-state transitions are defined.
+- Durable event storage/queue and retry/dead-letter handling are available.
+- Settlement reconciliation ownership and provider lookup capability are established.
 
 **Postconditions**
 - Business object has an explicit final or pending status.
@@ -77,7 +78,7 @@ flowchart TD
 
 ## 6. System interaction view
 
-This logical sequence shows system responsibilities. Adapt participants and messages to the selected architecture and provider contract.
+The sequence models payment intent creation, provider webhook authentication, durable event persistence, deduplication, ledger state transition, and provider reconciliation.
 
 ```mermaid
 sequenceDiagram
@@ -141,7 +142,7 @@ Use stable identifiers, explicit timestamps/time zones, currency and unit defini
 
 ## 9. State model
 
-The following is a lifecycle scaffold. Rename, add, or remove states to reflect the domain and define permitted transitions in the implementation specification.
+The state names and transitions below describe the proposed lifecycle for this workflow. Confirm guards, role permissions, timeout transitions, and terminal-state behavior with the process owner and implementation team before production use.
 
 ```mermaid
 stateDiagram-v2
@@ -193,6 +194,11 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - **AC-02:** Given the same provider event is delivered twice, when processed, then only one business side effect occurs.
 - **AC-03:** Given a customer reports debit while provider state is unknown, when support opens a case, then a second payment request is blocked pending reconciliation.
 - **AC-04:** Given provider amount or currency differs from order, when event is processed, then payment is quarantined for review.
+- **AC-05:** Given a customer presents a redirect or screenshot, when payment is verified, then only provider-confirmed status can establish payment completion.
+- **AC-06:** Given a provider event attempts an invalid payment-state regression, when processed, then the transition is rejected and the event is reconciled.
+- **AC-07:** Given payment creation, capture, refund, or retry is submitted more than once, when the same idempotency key is used, then no duplicate financial side effect occurs.
+- **AC-08:** Given a privileged operator manually confirms a transaction, when approval is absent or evidence/reason is missing, then the confirmation is blocked.
+- **AC-09:** Given payment reaches authorization, capture, settlement, refund, or bank payout, when status is recorded, then each stage remains separately identifiable.
 
 ## 13. Operational metrics
 
@@ -202,7 +208,12 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - Payment/order state mismatch rate
 - Settlement reconciliation variance
 
-Define numerator, denominator, source system, measurement window, owner, and baseline before setting targets. Metrics are measurement proposals, not promised improvements.
+- **Webhook acceptance rate:** authenticated, schema-valid events durably acknowledged ÷ received events.
+- **Processing latency:** ledger-application timestamp minus provider-event timestamp; report median and P99.
+- **Duplicate suppression count:** duplicate event deliveries safely ignored, monitored alongside duplicate side-effect incidents.
+- **Reconciliation lag:** time between provider final state and merchant ledger agreement. Review daily by provider/event type.
+
+Assign a named metric owner, reporting window, and baseline before setting a target. These are measurement definitions, not promised improvements.
 
 ## 14. Assumptions and open decisions
 
@@ -213,9 +224,16 @@ Define numerator, denominator, source system, measurement window, owner, and bas
 
 ## 15. Traceability
 
-| Rule group | Acceptance criteria | Implementation evidence |
+| Business rule | Acceptance criterion | Verification focus |
 |---|---|---|
-| BR-001 to BR-008 | AC-01 to AC-04 | Unit/integration tests, audit events, and process-owner sign-off |
+| BR-001 | AC-05 | only provider-confirmed status can establish payment completion |
+| BR-002 | AC-01 | no payment state changes and the event is rejected |
+| BR-003 | AC-02 | only one business side effect occurs |
+| BR-004 | AC-06 | the transition is rejected and the event is reconciled |
+| BR-005 | AC-07 | no duplicate financial side effect occurs |
+| BR-006 | AC-03 | a second payment request is blocked pending reconciliation |
+| BR-007 | AC-08 | the confirmation is blocked |
+| BR-008 | AC-09 | each stage remains separately identifiable |
 
 ---
 

@@ -4,7 +4,7 @@
 
 The library translates operational problems into explicit actors, decisions, business rules, exception paths, and system responsibilities. Diagrams use Mermaid and are maintained as Markdown so they can be reviewed and versioned alongside product documentation.
 
-[Browse workflows](#workflow-catalog) · [Use a workflow](#how-to-use-this-library) · [Contribute](./CONTRIBUTING.md) · [Workflow template](./docs/workflow-template.md)
+[Browse workflows](#workflow-catalog) · [Use a workflow](#how-to-use-this-library) · [Contribute](./CONTRIBUTING.md) · [Workflow template](./docs/workflow-template.md) · [Developer readiness checklist](./docs/developer-implementation-readiness.md)
 
 ---
 
@@ -47,7 +47,7 @@ The repository currently contains **16 workflow files across five domains**.
 | Workflow | Focus |
 |---|---|
 | [Dormant customer reactivation](./02-crm-and-customer-retention/dormant-customer-reactivation.md) | Inactivity identification and win-back |
-| [Customer onboarding](./02-crm-and-customer-retention/customer-onboarding-journey.md) | Registration and activation |
+| [Customer loyalty enrollment and tier management](./02-crm-and-customer-retention/customer-loyalty-enrollment.md) | Enrollment, consent, points, and tier qualification |
 | [Complaint and ticket resolution](./02-crm-and-customer-retention/complaint-and-ticket-resolution.md) | Triage, escalation, and resolution |
 
 ### 3. Financial and billing
@@ -55,7 +55,7 @@ The repository currently contains **16 workflow files across five domains**.
 | Workflow | Focus |
 |---|---|
 | [Subscription billing and dunning](./03-financial-and-billing/subscription-billing-and-dunning.md) | Renewal, failed payment, retry, and access states |
-| [Multi-vendor settlement](./03-financial-and-billing/multi-vendor-escrow-split.md) | Conditional settlement and allocation |
+| [Marketplace vendor settlement](./03-financial-and-billing/marketplace-vendor-settlement.md) | Conditional settlement and allocation |
 | [Expense approval hierarchy](./03-financial-and-billing/expense-approval-hierarchy.md) | Approval routing and authorization |
 
 ### 4. Supply chain and inventory

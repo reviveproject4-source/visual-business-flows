@@ -36,13 +36,14 @@ Orders across channels can become inconsistent across payment, stock reservation
 
 ## 4. Trigger, preconditions, and postconditions
 
-**Trigger:** A valid business event or authorized user action initiates the workflow.
+**Trigger:** A customer submits an order and the order service accepts it for validation.
 
 **Preconditions**
-- Initiating actor or service is authenticated.
-- Required master data, policy versions, and reference records are available.
-- Requested object is in a state that permits the operation.
-- Required permissions and segregation-of-duty controls are configured.
+- The customer/order reference is valid and the requested items are identifiable.
+- Product price, tax, fulfillment, and cancellation policies have an effective version.
+- Inventory availability can be checked or a backorder/substitution policy is defined.
+- Delivery or pickup method and destination are captured where fulfillment requires them.
+- Payment authorization/capture timing and reservation-expiry rules are defined.
 
 **Postconditions**
 - Business object has an explicit final or pending status.
@@ -67,7 +68,7 @@ flowchart TD
     E -->|Yes| J[Authorize payment]
     I --> J
     J --> K{Payment confirmed?}
-    K -->|No| L[Keep unpaid or cancel; release reservation]
+    K -->|No| L[Keep unpaid or cancel, release reservation]
     K -->|Yes| M[Pick, verify, pack, and label]
     M --> N{Picking discrepancy?}
     N -->|Yes| O[Resolve shortage or obtain customer decision]
@@ -80,7 +81,7 @@ flowchart TD
 
 ## 6. System interaction view
 
-This logical sequence shows system responsibilities. Adapt participants and messages to the selected architecture and provider contract.
+The sequence models the order service coordinating inventory reservation, payment authorization, picking/packing, courier booking, delivery confirmation, and cancellation/recovery events.
 
 ```mermaid
 sequenceDiagram
@@ -149,7 +150,7 @@ Use stable identifiers, explicit timestamps/time zones, currency and unit defini
 
 ## 9. State model
 
-The following is a lifecycle scaffold. Rename, add, or remove states to reflect the domain and define permitted transitions in the implementation specification.
+The state names and transitions below describe the proposed lifecycle for this workflow. Confirm guards, role permissions, timeout transitions, and terminal-state behavior with the process owner and implementation team before production use.
 
 ```mermaid
 stateDiagram-v2
@@ -204,6 +205,10 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - **AC-02:** Given stock is reserved, when another order requests unavailable quantity, then the second reservation is rejected or partially allocated according to policy.
 - **AC-03:** Given a courier callback is delivered twice, when processed, then only one state transition and audit event are applied.
 - **AC-04:** Given delivery fails, when the provider reports failure, then the order remains unresolved and a recovery action is available.
+- **AC-05:** Given an order is submitted from any supported channel, when it is accepted, then a unique order ID and channel reference are stored.
+- **AC-06:** Given an order is paid or fulfilled, when its status changes, then payment and fulfillment statuses remain independently queryable.
+- **AC-07:** Given an item is unavailable, when substitution is proposed, then fulfillment remains on hold until customer consent is recorded.
+- **AC-08:** Given an order is cancelled, when cancellation is completed, then reservations are released and payment is voided or reversed according to provider state.
 
 ## 13. Operational metrics
 
@@ -213,7 +218,12 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - Delivery success rate and failed-delivery reasons
 - Orders with stale or inconsistent payment/fulfillment states
 
-Define numerator, denominator, source system, measurement window, owner, and baseline before setting targets. Metrics are measurement proposals, not promised improvements.
+- **Order cycle time:** delivered timestamp minus accepted-order timestamp; source: order events; report median and P90 by fulfillment method.
+- **On-time delivery rate:** orders delivered by promised time ÷ delivered orders; source: delivery milestones.
+- **Line fill rate:** fulfilled order lines ÷ requested order lines; source: order and fulfillment records.
+- Review daily for operations; segment by channel, location, and exception reason.
+
+Assign a named metric owner, reporting window, and baseline before setting a target. These are measurement definitions, not promised improvements.
 
 ## 14. Assumptions and open decisions
 
@@ -224,9 +234,16 @@ Define numerator, denominator, source system, measurement window, owner, and bas
 
 ## 15. Traceability
 
-| Rule group | Acceptance criteria | Implementation evidence |
+| Business rule | Acceptance criterion | Verification focus |
 |---|---|---|
-| BR-001 to BR-008 | AC-01 to AC-04 | Unit/integration tests, audit events, and process-owner sign-off |
+| BR-001 | AC-05 | a unique order ID and channel reference are stored |
+| BR-002 | AC-06 | payment and fulfillment statuses remain independently queryable |
+| BR-003 | AC-02 | the second reservation is rejected or partially allocated according to policy |
+| BR-004 | AC-01 | release is blocked unless an explicit payment policy permits it |
+| BR-005 | AC-07 | fulfillment remains on hold until customer consent is recorded |
+| BR-006 | AC-03 | only one state transition and audit event are applied |
+| BR-007 | AC-04 | the order remains unresolved and a recovery action is available |
+| BR-008 | AC-08 | reservations are released and payment is voided or reversed according to provider state |
 
 ---
 

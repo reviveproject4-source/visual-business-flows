@@ -36,13 +36,14 @@ Goods may arrive in quantities or condition different from the purchase order. I
 
 ## 4. Trigger, preconditions, and postconditions
 
-**Trigger:** A valid business event or authorized user action initiates the workflow.
+**Trigger:** A supplier delivery arrives at the receiving location against a purchase order, ASN, or approved inbound reference.
 
 **Preconditions**
-- Initiating actor or service is authenticated.
-- Required master data, policy versions, and reference records are available.
-- Requested object is in a state that permits the operation.
-- Required permissions and segregation-of-duty controls are configured.
+- Supplier, receiving location, purchase order/ASN, SKU, and unit-of-measure references are valid.
+- Expected quantities, tolerances, batch/serial/expiry requirements, and inspection rules are available.
+- Receiving, quality inspection, quarantine, and rejection responsibilities are assigned.
+- Inventory is unavailable for sale until configured acceptance/posting conditions are met.
+- Discrepancy evidence and supplier-claim ownership are defined.
 
 **Postconditions**
 - Business object has an explicit final or pending status.
@@ -78,7 +79,7 @@ flowchart TD
 
 ## 6. System interaction view
 
-This logical sequence shows system responsibilities. Adapt participants and messages to the selected architecture and provider contract.
+The sequence models inbound reference validation, physical receiving, quantity/quality inspection, quarantine or acceptance, inventory posting, and purchase-order/invoice matching.
 
 ```mermaid
 sequenceDiagram
@@ -136,7 +137,7 @@ Use stable identifiers, explicit timestamps/time zones, currency and unit defini
 
 ## 9. State model
 
-The following is a lifecycle scaffold. Rename, add, or remove states to reflect the domain and define permitted transitions in the implementation specification.
+The state names and transitions below describe the proposed lifecycle for this workflow. Confirm guards, role permissions, timeout transitions, and terminal-state behavior with the process owner and implementation team before production use.
 
 ```mermaid
 stateDiagram-v2
@@ -186,6 +187,10 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - **AC-02:** Given inspection rejects part of a delivery, when receipt is posted, then only accepted quantity becomes available.
 - **AC-03:** Given required lot or expiry data is missing, when put-away is attempted, then validation blocks release.
 - **AC-04:** Given WMS is offline, when an offline receipt is recorded, then it remains non-available until reconciliation completes.
+- **AC-05:** Given received quantity exceeds the configured supplier/SKU tolerance, when receipt is validated, then excess quantity is held for authorized disposition.
+- **AC-06:** Given a controlled product requires segregation of duties, when the receiver attempts to approve their own quality result, then approval is blocked or escalated.
+- **AC-07:** Given a posted receipt requires correction, when correction is approved, then a reversal/adjustment event with reason and approval is recorded.
+- **AC-08:** Given a supplier invoice is matched, when ordered, received, and invoiced quantities exceed configured tolerance, then the match is held for review.
 
 ## 13. Operational metrics
 
@@ -195,7 +200,12 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - Supplier on-time/in-full performance
 - Three-way match exception rate
 
-Define numerator, denominator, source system, measurement window, owner, and baseline before setting targets. Metrics are measurement proposals, not promised improvements.
+- **Receiving accuracy:** accepted quantity matching purchase-order expectation within approved tolerance ÷ expected quantity.
+- **Dock-to-stock time:** inventory-available timestamp minus physical-arrival timestamp; report median and P90.
+- **Supplier discrepancy rate:** receipts with quantity/quality discrepancy ÷ total receipts.
+- **Quarantine aging:** quarantined units or value grouped by days awaiting disposition. Review weekly by supplier and SKU.
+
+Assign a named metric owner, reporting window, and baseline before setting a target. These are measurement definitions, not promised improvements.
 
 ## 14. Assumptions and open decisions
 
@@ -206,9 +216,16 @@ Define numerator, denominator, source system, measurement window, owner, and bas
 
 ## 15. Traceability
 
-| Rule group | Acceptance criteria | Implementation evidence |
+| Business rule | Acceptance criterion | Verification focus |
 |---|---|---|
-| BR-001 to BR-008 | AC-01 to AC-04 | Unit/integration tests, audit events, and process-owner sign-off |
+| BR-001 | AC-01 | stock is held in exception status and not made available |
+| BR-002 | AC-02 | only accepted quantity becomes available |
+| BR-003 | AC-02 | only accepted quantity becomes available |
+| BR-004 | AC-03 | validation blocks release |
+| BR-005 | AC-05 | excess quantity is held for authorized disposition |
+| BR-006 | AC-06 | approval is blocked or escalated |
+| BR-007 | AC-07 | a reversal/adjustment event with reason and approval is recorded |
+| BR-008 | AC-08 | the match is held for review |
 
 ---
 

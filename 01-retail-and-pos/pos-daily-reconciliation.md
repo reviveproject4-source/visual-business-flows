@@ -74,11 +74,11 @@ flowchart TD
     G -->|No| I[Preserve initial count and open variance case]
     I --> J[Independent witnessed recount]
     J --> K{Recount explains difference?}
-    K -->|Yes| L[Record recount result and reason; retain both counts]
+    K -->|Yes| L[Record recount result and reason, retain both counts]
     K -->|No| M[Collect supporting evidence and investigate]
     M --> N{Authorized resolution available?}
     N -->|Yes| O[Supervisor approves documented resolution]
-    N -->|No| P[Escalate to manager; keep case unresolved]
+    N -->|No| P[Escalate to manager, keep case unresolved]
     L --> H
     O --> H
     P --> Q[Close shift as exception only if policy permits]
@@ -116,7 +116,7 @@ sequenceDiagram
         POS->>Accounting: Submit reconciliation using idempotency key
         Accounting-->>POS: Return posting reference or pending status
     else One or more variances exist
-        POS-->>Cashier: Show variance case; preserve initial count
+        POS-->>Cashier: Show variance case and preserve initial count
         POS->>Audit: Record VARIANCE_OPENED
         Supervisor->>POS: Record witnessed recount and evidence
         POS->>POS: Recalculate without overwriting prior count
@@ -230,16 +230,16 @@ Every material event should record actor or service identity, timestamp, registe
 
 ## 12. Acceptance criteria
 
-1. **Blind count:** Given a cashier starts a close, when the initial count form is displayed, then expected cash is not exposed through the UI or the cashier-facing API response.
-2. **Snapshot consistency:** Given a close has started, when eligible transactions are calculated, then the result references a stable snapshot and cutoff time.
-3. **Tender separation:** Given cash is short and card is over, when variance is calculated, then the two differences remain separate and are not netted.
-4. **Immutable attempts:** Given an initial count is submitted, when a recount is required, then a new count attempt is created and the original remains readable.
-5. **Approval control:** Given a non-zero variance, when an unauthorized user attempts approval, then the server rejects the command and records the denied action where required.
-6. **Evidence traceability:** Given a variance case is escalated, when an auditor opens it, then the initial count, recounts, reason, evidence references, decisions, and timestamps are available.
-7. **Idempotent posting:** Given an accounting request is retried with the same idempotency key, then no duplicate posting is created.
-8. **Failure visibility:** Given accounting rejects or cannot receive a posting, then the close retains a visible pending/failed posting state and a retry path.
-9. **No silent adjustment:** Given a user attempts to change expected totals or delete a submitted count, then the operation is rejected or represented as a separately authorized correction event.
-10. **Reopen control:** Given a closed shift is reopened, then elevated authorization and a reason are required and the original close history remains intact.
+1. **AC-01 — Blind count:** Given a cashier starts a close, when the initial count form is displayed, then expected cash is not exposed through the UI or the cashier-facing API response.
+2. **AC-02 — Snapshot consistency:** Given a close has started, when eligible transactions are calculated, then the result references a stable snapshot and cutoff time.
+3. **AC-03 — Tender separation:** Given cash is short and card is over, when variance is calculated, then the two differences remain separate and are not netted.
+4. **AC-04 — Immutable attempts:** Given an initial count is submitted, when a recount is required, then a new count attempt is created and the original remains readable.
+5. **AC-05 — Approval control:** Given a non-zero variance, when an unauthorized user attempts approval, then the server rejects the command and records the denied action where required.
+6. **AC-06 — Evidence traceability:** Given a variance case is escalated, when an auditor opens it, then the initial count, recounts, reason, evidence references, decisions, and timestamps are available.
+7. **AC-07 — Idempotent posting:** Given an accounting request is retried with the same idempotency key, then no duplicate posting is created.
+8. **AC-08 — Failure visibility:** Given accounting rejects or cannot receive a posting, then the close retains a visible pending/failed posting state and a retry path.
+9. **AC-09 — No silent adjustment:** Given a user attempts to change expected totals or delete a submitted count, then the operation is rejected or represented as a separately authorized correction event.
+10. **AC-10 — Reopen control:** Given a closed shift is reopened, then elevated authorization and a reason are required and the original close history remains intact.
 
 ## 13. Operational metrics
 
@@ -269,13 +269,22 @@ The following must be confirmed with stakeholders before implementation:
 
 ## 15. Traceability
 
-| Requirement group | Related rules | Acceptance criteria |
+| Business rule | Acceptance criterion | Verification focus |
 |---|---|---|
-| Close and snapshot | BR-001, BR-002 | AC-02 |
-| Blind count and tender calculation | BR-003, BR-005 | AC-01, AC-03 |
-| Recount and auditability | BR-004, BR-006, BR-007, BR-009 | AC-04, AC-06, AC-09 |
-| Approval and exception | BR-008, BR-013, BR-014 | AC-05, AC-10 |
-| Accounting integration | BR-011, BR-012 | AC-07, AC-08 |
+| BR-001 | AC-02 | the result references a stable snapshot and cutoff time |
+| BR-002 | AC-02 | the result references a stable snapshot and cutoff time |
+| BR-003 | AC-01 | expected cash is not exposed through the UI or the cashier-facing API response |
+| BR-004 | AC-04 | a new count attempt is created and the original remains readable |
+| BR-005 | AC-03 | the two differences remain separate and are not netted |
+| BR-006 | AC-06 | the initial count, recounts, reason, evidence references, decisions, and timestamps are available |
+| BR-007 | AC-04, AC-06 | a new count attempt is created and the original remains readable; the initial count, recounts, reason, evidence references, decisions, and timestamps are available |
+| BR-008 | AC-05 | the server rejects the command and records the denied action where required |
+| BR-009 | AC-09 | the operation is rejected or represented as a separately authorized correction event |
+| BR-010 | AC-03 | the two differences remain separate and are not netted |
+| BR-011 | AC-07 | no duplicate posting is created |
+| BR-012 | AC-08 | the close retains a visible pending/failed posting state and a retry path |
+| BR-013 | AC-10 | elevated authorization and a reason are required and the original close history remains intact |
+| BR-014 | AC-05, AC-06 | the server rejects the command and records the denied action where required; the initial count, recounts, reason, evidence references, decisions, and timestamps are available |
 
 ---
 

@@ -35,13 +35,14 @@ Complaints can be lost across channels, assigned without ownership, or closed be
 
 ## 4. Trigger, preconditions, and postconditions
 
-**Trigger:** A valid business event or authorized user action initiates the workflow.
+**Trigger:** A complaint or support request is received through an enabled customer channel and a ticket is created or matched.
 
 **Preconditions**
-- Initiating actor or service is authenticated.
-- Required master data, policy versions, and reference records are available.
-- Requested object is in a state that permits the operation.
-- Required permissions and segregation-of-duty controls are configured.
+- Customer/requester identity and affected order, account, or service reference are captured where applicable.
+- Ticket categories, severity definitions, routing rules, and support hours are configured.
+- SLA clocks, pause conditions, escalation ownership, and communication channels are defined.
+- Evidence attachments have access and retention controls.
+- Duplicate-ticket matching and reopen rules are available.
 
 **Postconditions**
 - Business object has an explicit final or pending status.
@@ -77,7 +78,7 @@ flowchart TD
 
 ## 6. System interaction view
 
-This logical sequence shows system responsibilities. Adapt participants and messages to the selected architecture and provider contract.
+The sequence models complaint intake, ticket deduplication, severity/SLA calculation, ownership routing, escalation, compensation authorization, closure communication, and reopen handling.
 
 ```mermaid
 sequenceDiagram
@@ -137,7 +138,7 @@ Use stable identifiers, explicit timestamps/time zones, currency and unit defini
 
 ## 9. State model
 
-The following is a lifecycle scaffold. Rename, add, or remove states to reflect the domain and define permitted transitions in the implementation specification.
+The state names and transitions below describe the proposed lifecycle for this workflow. Confirm guards, role permissions, timeout transitions, and terminal-state behavior with the process owner and implementation team before production use.
 
 ```mermaid
 stateDiagram-v2
@@ -184,6 +185,9 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - **AC-02:** Given an SLA approaches breach, when the warning threshold is reached, then the owner and escalation role are notified.
 - **AC-03:** Given compensation exceeds agent authority, when submitted, then issuance is blocked pending approval.
 - **AC-04:** Given a customer disputes a closed ticket within the reopen window, when the reply is ingested, then the ticket reopens or a linked follow-up is created.
+- **AC-05:** Given an escalation changes the responsible team, when ownership transfers, then prior investigation history and timestamps remain linked to the ticket.
+- **AC-06:** Given a ticket is closed, when closure is attempted, then a resolution code and customer communication record are required.
+- **AC-07:** Given a ticket contains sensitive attachments, when a user without access attempts retrieval, then access is denied and the event is auditable.
 
 ## 13. Operational metrics
 
@@ -193,7 +197,12 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - Customer satisfaction by resolution type
 - Recurring root causes by product/channel
 
-Define numerator, denominator, source system, measurement window, owner, and baseline before setting targets. Metrics are measurement proposals, not promised improvements.
+- **First response time:** first human response timestamp minus ticket-created timestamp; report median and P90.
+- **Resolution time:** resolved timestamp minus ticket-created timestamp, excluding only documented paused intervals.
+- **SLA attainment:** tickets meeting the applicable response/resolution SLA ÷ eligible tickets.
+- **Reopen rate:** tickets reopened within the defined observation window ÷ resolved tickets. Review weekly by category and severity.
+
+Assign a named metric owner, reporting window, and baseline before setting a target. These are measurement definitions, not promised improvements.
 
 ## 14. Assumptions and open decisions
 
@@ -204,9 +213,16 @@ Define numerator, denominator, source system, measurement window, owner, and bas
 
 ## 15. Traceability
 
-| Rule group | Acceptance criteria | Implementation evidence |
+| Business rule | Acceptance criterion | Verification focus |
 |---|---|---|
-| BR-001 to BR-008 | AC-01 to AC-04 | Unit/integration tests, audit events, and process-owner sign-off |
+| BR-001 | AC-01 | a unique ID and accountable owner are assigned |
+| BR-002 | AC-02 | the owner and escalation role are notified |
+| BR-003 | AC-02 | the owner and escalation role are notified |
+| BR-004 | AC-03 | issuance is blocked pending approval |
+| BR-005 | AC-05 | prior investigation history and timestamps remain linked to the ticket |
+| BR-006 | AC-06 | a resolution code and customer communication record are required |
+| BR-007 | AC-04 | the ticket reopens or a linked follow-up is created |
+| BR-008 | AC-07 | access is denied and the event is auditable |
 
 ---
 

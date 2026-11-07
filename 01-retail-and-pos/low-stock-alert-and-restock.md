@@ -35,13 +35,14 @@ Replenishment based only on on-hand quantity can create duplicate purchase order
 
 ## 4. Trigger, preconditions, and postconditions
 
-**Trigger:** A valid business event or authorized user action initiates the workflow.
+**Trigger:** An inventory event or scheduled stock evaluation finds an SKU-location available quantity at or below its configured reorder point.
 
 **Preconditions**
-- Initiating actor or service is authenticated.
-- Required master data, policy versions, and reference records are available.
-- Requested object is in a state that permits the operation.
-- Required permissions and segregation-of-duty controls are configured.
+- SKU, location, unit of measure, and inventory status are valid.
+- On-hand, reserved, damaged, quarantined, and inbound quantities are distinguishable.
+- Reorder point, safety stock, minimum order quantity, and lead time have approved sources or are explicitly marked as assumptions.
+- Supplier/catalog availability and purchasing authority are configured.
+- Duplicate alerts and open purchase orders can be checked before replenishment.
 
 **Postconditions**
 - Business object has an explicit final or pending status.
@@ -69,16 +70,16 @@ flowchart TD
     K -->|No| I
     K -->|Yes| L[Issue PO with unique reference]
     L --> M{Supplier acknowledges?}
-    M -->|No| N[Escalate supplier exception; do not duplicate PO]
+    M -->|No| N[Escalate supplier exception, do not duplicate PO]
     M -->|Yes| O[Receive and inspect shipment]
-    O --> P[Post accepted units; quarantine discrepancies]
+    O --> P[Post accepted units, quarantine discrepancies]
     P --> Q[Reconcile PO and inventory position]
     Q --> R([Close replenishment task])
 ```
 
 ## 6. System interaction view
 
-This logical sequence shows system responsibilities. Adapt participants and messages to the selected architecture and provider contract.
+The sequence models stock-position calculation, alert deduplication, replenishment proposal, buyer approval, purchase-order transmission, and receipt reconciliation.
 
 ```mermaid
 sequenceDiagram
@@ -142,7 +143,7 @@ Use stable identifiers, explicit timestamps/time zones, currency and unit defini
 
 ## 9. State model
 
-The following is a lifecycle scaffold. Rename, add, or remove states to reflect the domain and define permitted transitions in the implementation specification.
+The state names and transitions below describe the proposed lifecycle for this workflow. Confirm guards, role permissions, timeout transitions, and terminal-state behavior with the process owner and implementation team before production use.
 
 ```mermaid
 stateDiagram-v2
@@ -195,6 +196,8 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - **AC-02:** Given inventory data is stale, when reorder calculation runs, then the proposal is marked provisional or blocked.
 - **AC-03:** Given a PO is partially received, when receipt is posted, then received units update stock and the outstanding balance remains open.
 - **AC-04:** Given a requisition exceeds an approver's authority, when submitted, then it routes to the next authorized level.
+- **AC-05:** Given a replenishment proposal is calculated, when supplier pack size or minimum order quantity applies, then the suggested quantity respects those constraints.
+- **AC-06:** Given an approved purchase order is transmitted, when the transmission is retried with the same request key, then no duplicate supplier commitment is created.
 
 ## 13. Operational metrics
 
@@ -204,7 +207,12 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - Supplier on-time/in-full delivery
 - Inventory days on hand and excess stock value
 
-Define numerator, denominator, source system, measurement window, owner, and baseline before setting targets. Metrics are measurement proposals, not promised improvements.
+- **Stockout rate:** SKU-location days with available quantity at zero ÷ active SKU-location days.
+- **Alert conversion:** alerts resulting in an approved replenishment action ÷ actionable alerts.
+- **Replenishment lead time:** receipt timestamp minus approved purchase-order timestamp; report median and P90 by supplier.
+- Review weekly; segment by SKU, supplier, and location.
+
+Assign a named metric owner, reporting window, and baseline before setting a target. These are measurement definitions, not promised improvements.
 
 ## 14. Assumptions and open decisions
 
@@ -215,9 +223,15 @@ Define numerator, denominator, source system, measurement window, owner, and bas
 
 ## 15. Traceability
 
-| Rule group | Acceptance criteria | Implementation evidence |
+| Business rule | Acceptance criterion | Verification focus |
 |---|---|---|
-| BR-001 to BR-007 | AC-01 to AC-04 | Unit/integration tests, audit events, and process-owner sign-off |
+| BR-001 | AC-02 | the proposal is marked provisional or blocked |
+| BR-002 | AC-02 | the proposal is marked provisional or blocked |
+| BR-003 | AC-01 | it does not create a duplicate requisition |
+| BR-004 | AC-05 | the suggested quantity respects those constraints |
+| BR-005 | AC-06 | no duplicate supplier commitment is created |
+| BR-006 | AC-04 | it routes to the next authorized level |
+| BR-007 | AC-03 | received units update stock and the outstanding balance remains open |
 
 ---
 

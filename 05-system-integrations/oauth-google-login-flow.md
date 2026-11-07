@@ -36,13 +36,14 @@ Social sign-in can expose accounts to takeover or incorrect account linking when
 
 ## 4. Trigger, preconditions, and postconditions
 
-**Trigger:** A valid business event or authorized user action initiates the workflow.
+**Trigger:** A user selects Google sign-in or starts an explicitly authorized Google account-linking action.
 
 **Preconditions**
-- Initiating actor or service is authenticated.
-- Required master data, policy versions, and reference records are available.
-- Requested object is in a state that permits the operation.
-- Required permissions and segregation-of-duty controls are configured.
+- OAuth client, exact redirect URI, allowed origins, and OIDC discovery/JWKS configuration are registered.
+- Authorization Code Flow with PKCE is supported and state/nonce lifetimes are defined.
+- Client ID, requested scopes, consent behavior, and account-linking policy are configured.
+- Tenant invitation/signup rules and least-privilege role assignment are enforced by the backend.
+- Session issuance, rotation, expiry, revocation, and secure cookie/storage controls are defined.
 
 **Postconditions**
 - Business object has an explicit final or pending status.
@@ -77,7 +78,7 @@ flowchart TD
 
 ## 6. System interaction view
 
-This logical sequence shows system responsibilities. Adapt participants and messages to the selected architecture and provider contract.
+The sequence models browser authorization initiation, Google callback, state/PKCE and ID-token validation, identity/tenant resolution, and secure session issuance.
 
 ```mermaid
 sequenceDiagram
@@ -144,7 +145,7 @@ Use stable identifiers, explicit timestamps/time zones, currency and unit defini
 
 ## 9. State model
 
-The following is a lifecycle scaffold. Rename, add, or remove states to reflect the domain and define permitted transitions in the implementation specification.
+The state names and transitions below describe the proposed lifecycle for this workflow. Confirm guards, role permissions, timeout transitions, and terminal-state behavior with the process owner and implementation team before production use.
 
 ```mermaid
 stateDiagram-v2
@@ -199,6 +200,9 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - **AC-02:** Given an ID token has invalid issuer, audience, signature, expiry, or nonce, when validated, then account creation and session issuance are blocked.
 - **AC-03:** Given an email matches an existing user but provider subject is not linked, when sign-in occurs, then automatic account linking is not performed.
 - **AC-04:** Given a user has no tenant membership, when accessing tenant resources, then authorization denies access despite successful authentication.
+- **AC-05:** Given a public client starts Google sign-in, when authorization is initiated, then PKCE is used and no client secret is exposed in browser/mobile code.
+- **AC-06:** Given a callback contains an unregistered redirect URI or untrusted return URL, when processed, then the request is rejected.
+- **AC-07:** Given a session is issued, when it expires, rotates, or is revoked, then secure storage/cookie controls and session lifecycle rules are enforced.
 
 ## 13. Operational metrics
 
@@ -208,7 +212,12 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - Session revocation and refresh replay events
 - Sign-in latency and provider availability
 
-Define numerator, denominator, source system, measurement window, owner, and baseline before setting targets. Metrics are measurement proposals, not promised improvements.
+- **Authentication completion rate:** successful authenticated sessions ÷ valid sign-in starts.
+- **Callback rejection rate:** rejected callbacks ÷ received callbacks, segmented by state, code, and token validation reason.
+- **Account-linking incident count:** confirmed incorrect or disputed identity-link events per reporting period.
+- **Sign-in latency:** session-issued timestamp minus sign-in-start timestamp; report median and P95. Review security events continuously.
+
+Assign a named metric owner, reporting window, and baseline before setting a target. These are measurement definitions, not promised improvements.
 
 ## 14. Assumptions and open decisions
 
@@ -219,9 +228,16 @@ Define numerator, denominator, source system, measurement window, owner, and bas
 
 ## 15. Traceability
 
-| Rule group | Acceptance criteria | Implementation evidence |
+| Business rule | Acceptance criterion | Verification focus |
 |---|---|---|
-| BR-001 to BR-008 | AC-01 to AC-04 | Unit/integration tests, audit events, and process-owner sign-off |
+| BR-001 | AC-05 | PKCE is used and no client secret is exposed in browser/mobile code |
+| BR-002 | AC-01 | authentication is rejected and no session is issued |
+| BR-003 | AC-02 | account creation and session issuance are blocked |
+| BR-004 | AC-03 | automatic account linking is not performed |
+| BR-005 | AC-03 | automatic account linking is not performed |
+| BR-006 | AC-04 | authorization denies access despite successful authentication |
+| BR-007 | AC-06 | the request is rejected |
+| BR-008 | AC-07 | secure storage/cookie controls and session lifecycle rules are enforced |
 
 ---
 

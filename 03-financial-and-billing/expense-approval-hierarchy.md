@@ -35,13 +35,14 @@ Expense requests can bypass budget ownership, split purchases to avoid approval 
 
 ## 4. Trigger, preconditions, and postconditions
 
-**Trigger:** A valid business event or authorized user action initiates the workflow.
+**Trigger:** An employee or authorized requester submits an expense or purchase request for approval.
 
 **Preconditions**
-- Initiating actor or service is authenticated.
-- Required master data, policy versions, and reference records are available.
-- Requested object is in a state that permits the operation.
-- Required permissions and segregation-of-duty controls are configured.
+- Requester, legal entity, department/cost center, budget period, and expense category are identifiable.
+- Approval thresholds and delegation rules have an effective version and currency basis.
+- Required receipts, invoice, business purpose, and vendor details are specified by category.
+- Self-approval is blocked where segregation-of-duties policy prohibits it.
+- Duplicate submission and budget reservation behavior are defined.
 
 **Postconditions**
 - Business object has an explicit final or pending status.
@@ -77,7 +78,7 @@ flowchart TD
 
 ## 6. System interaction view
 
-This logical sequence shows system responsibilities. Adapt participants and messages to the selected architecture and provider contract.
+The sequence models expense submission, evidence and duplicate checks, budget validation, delegation-of-authority routing, reapproval after material change, and accounts-payable handoff.
 
 ```mermaid
 sequenceDiagram
@@ -142,7 +143,7 @@ Use stable identifiers, explicit timestamps/time zones, currency and unit defini
 
 ## 9. State model
 
-The following is a lifecycle scaffold. Rename, add, or remove states to reflect the domain and define permitted transitions in the implementation specification.
+The state names and transitions below describe the proposed lifecycle for this workflow. Confirm guards, role permissions, timeout transitions, and terminal-state behavior with the process owner and implementation team before production use.
 
 ```mermaid
 stateDiagram-v2
@@ -194,6 +195,10 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - **AC-02:** Given amount exceeds the current approver limit, when routed, then it moves to a higher authorized approver.
 - **AC-03:** Given an approved request changes supplier or amount materially, when saved, then reapproval is required.
 - **AC-04:** Given a duplicate invoice is detected, when payment is scheduled, then it is blocked for finance review.
+- **AC-05:** Given related requests are submitted separately, when approval risk is evaluated, then related transactions are assessed for split-purchase avoidance.
+- **AC-06:** Given a request is submitted, when budget availability is checked, then the correct cost center and budget period are used.
+- **AC-07:** Given an expense category requires evidence, when a receipt, invoice, or business purpose is missing, then submission is blocked or routed to exception review.
+- **AC-08:** Given payment is released, when accounting posting occurs, then both actions reference the approved request and retain audit evidence.
 
 ## 13. Operational metrics
 
@@ -203,7 +208,12 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - Budget variance by cost center
 - Payment rejection and overdue payable rate
 
-Define numerator, denominator, source system, measurement window, owner, and baseline before setting targets. Metrics are measurement proposals, not promised improvements.
+- **Approval cycle time:** final decision timestamp minus submission timestamp; report median and P90 by approval path.
+- **Policy exception rate:** requests approved with documented policy exception ÷ submitted requests.
+- **Budget variance:** actual approved spend minus budget allocation, shown by cost center and period.
+- **Rework rate:** requests returned for missing/incorrect information ÷ submitted requests. Review monthly with budget owners.
+
+Assign a named metric owner, reporting window, and baseline before setting a target. These are measurement definitions, not promised improvements.
 
 ## 14. Assumptions and open decisions
 
@@ -214,9 +224,16 @@ Define numerator, denominator, source system, measurement window, owner, and bas
 
 ## 15. Traceability
 
-| Rule group | Acceptance criteria | Implementation evidence |
+| Business rule | Acceptance criterion | Verification focus |
 |---|---|---|
-| BR-001 to BR-008 | AC-01 to AC-04 | Unit/integration tests, audit events, and process-owner sign-off |
+| BR-001 | AC-02 | it moves to a higher authorized approver |
+| BR-002 | AC-01 | self-approval is rejected |
+| BR-003 | AC-05 | related transactions are assessed for split-purchase avoidance |
+| BR-004 | AC-06 | the correct cost center and budget period are used |
+| BR-005 | AC-07 | submission is blocked or routed to exception review |
+| BR-006 | AC-04 | it is blocked for finance review |
+| BR-007 | AC-03 | reapproval is required |
+| BR-008 | AC-08 | both actions reference the approved request and retain audit evidence |
 
 ---
 

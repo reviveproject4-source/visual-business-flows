@@ -36,13 +36,14 @@ Sending branch, carrier, and receiving branch may report different quantities. R
 
 ## 4. Trigger, preconditions, and postconditions
 
-**Trigger:** A valid business event or authorized user action initiates the workflow.
+**Trigger:** An authorized branch submits a stock transfer request and the source location accepts it for fulfillment.
 
 **Preconditions**
-- Initiating actor or service is authenticated.
-- Required master data, policy versions, and reference records are available.
-- Requested object is in a state that permits the operation.
-- Required permissions and segregation-of-duty controls are configured.
+- Source and destination locations, SKU, unit of measure, and requested quantity are valid.
+- Available-to-transfer stock excludes reserved, damaged, quarantined, and blocked units.
+- Transfer approval limits, dispatch authority, custody method, and receipt roles are defined.
+- In-transit inventory accounting and partial receipt/shortage handling are specified.
+- A unique transfer reference prevents duplicate dispatch.
 
 **Postconditions**
 - Business object has an explicit final or pending status.
@@ -79,7 +80,7 @@ flowchart TD
 
 ## 6. System interaction view
 
-This logical sequence shows system responsibilities. Adapt participants and messages to the selected architecture and provider contract.
+The sequence models transfer authorization, origin reservation/dispatch, in-transit custody, destination independent count, discrepancy case management, and controlled inventory adjustment.
 
 ```mermaid
 sequenceDiagram
@@ -141,7 +142,7 @@ Use stable identifiers, explicit timestamps/time zones, currency and unit defini
 
 ## 9. State model
 
-The following is a lifecycle scaffold. Rename, add, or remove states to reflect the domain and define permitted transitions in the implementation specification.
+The state names and transitions below describe the proposed lifecycle for this workflow. Confirm guards, role permissions, timeout transitions, and terminal-state behavior with the process owner and implementation team before production use.
 
 ```mermaid
 stateDiagram-v2
@@ -190,6 +191,7 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - **AC-02:** Given destination receives fewer units than dispatched, when receipt is posted, then actual units enter destination stock and difference remains an open discrepancy.
 - **AC-03:** Given a seal is reported damaged, when receipt is recorded, then evidence and witnessed inspection are required before closure.
 - **AC-04:** Given a variance is unresolved, when adjustment is requested, then automatic liability assignment is prohibited and authorized review is required.
+- **AC-05:** Given a transfer request is created, when it is accepted, then a unique transfer ID, source, destination, and approved line quantities are stored.
 
 ## 13. Operational metrics
 
@@ -199,7 +201,12 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - Discrepancy resolution time
 - Transfers with complete custody evidence
 
-Define numerator, denominator, source system, measurement window, owner, and baseline before setting targets. Metrics are measurement proposals, not promised improvements.
+- **Transfer lead time:** destination receipt timestamp minus source dispatch timestamp; report median and P90.
+- **Transfer fill rate:** accepted destination quantity ÷ dispatched quantity.
+- **Transfer variance rate:** transfers with quantity/condition variance ÷ completed transfers.
+- **In-transit aging:** open transfer value/count grouped by elapsed time since dispatch. Review weekly by lane and SKU.
+
+Assign a named metric owner, reporting window, and baseline before setting a target. These are measurement definitions, not promised improvements.
 
 ## 14. Assumptions and open decisions
 
@@ -210,9 +217,16 @@ Define numerator, denominator, source system, measurement window, owner, and bas
 
 ## 15. Traceability
 
-| Rule group | Acceptance criteria | Implementation evidence |
+| Business rule | Acceptance criterion | Verification focus |
 |---|---|---|
-| BR-001 to BR-008 | AC-01 to AC-04 | Unit/integration tests, audit events, and process-owner sign-off |
+| BR-001 | AC-05 | a unique transfer ID, source, destination, and approved line quantities are stored |
+| BR-002 | AC-01 | origin available stock decreases and equal in-transit quantity is created |
+| BR-003 | AC-03 | evidence and witnessed inspection are required before closure |
+| BR-004 | AC-03 | evidence and witnessed inspection are required before closure |
+| BR-005 | AC-02 | actual units enter destination stock and difference remains an open discrepancy |
+| BR-006 | AC-02 | actual units enter destination stock and difference remains an open discrepancy |
+| BR-007 | AC-04 | automatic liability assignment is prohibited and authorized review is required |
+| BR-008 | AC-04 | automatic liability assignment is prohibited and authorized review is required |
 
 ---
 

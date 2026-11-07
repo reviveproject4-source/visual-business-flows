@@ -35,13 +35,14 @@ Customer inactivity is detected inconsistently, while campaigns may contact peop
 
 ## 4. Trigger, preconditions, and postconditions
 
-**Trigger:** A valid business event or authorized user action initiates the workflow.
+**Trigger:** A scheduled segmentation run identifies a customer whose last qualifying activity exceeds the configured inactivity window.
 
 **Preconditions**
-- Initiating actor or service is authenticated.
-- Required master data, policy versions, and reference records are available.
-- Requested object is in a state that permits the operation.
-- Required permissions and segregation-of-duty controls are configured.
+- Customer identity and last qualifying activity timestamp are available and time-zone rules are defined.
+- Dormancy windows and segment eligibility are approved campaign configuration, not hard-coded assumptions.
+- Contact consent, suppression lists, channel preferences, and unsubscribe status are current.
+- An approved message/campaign version and destination channel exist.
+- Frequency caps and duplicate-contact prevention rules are configured.
 
 **Postconditions**
 - Business object has an explicit final or pending status.
@@ -83,7 +84,7 @@ flowchart TD
 
 ## 6. System interaction view
 
-This logical sequence shows system responsibilities. Adapt participants and messages to the selected architecture and provider contract.
+The sequence models customer segmentation, consent/suppression checks, campaign scheduling, channel delivery, interaction events, and suppression after purchase or opt-out.
 
 ```mermaid
 sequenceDiagram
@@ -138,7 +139,7 @@ Use stable identifiers, explicit timestamps/time zones, currency and unit defini
 
 ## 9. State model
 
-The following is a lifecycle scaffold. Rename, add, or remove states to reflect the domain and define permitted transitions in the implementation specification.
+The state names and transitions below describe the proposed lifecycle for this workflow. Confirm guards, role permissions, timeout transitions, and terminal-state behavior with the process owner and implementation team before production use.
 
 ```mermaid
 stateDiagram-v2
@@ -190,6 +191,9 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - **AC-02:** Given a customer purchases before a queued message is sent, when the event is processed, then the pending message is cancelled.
 - **AC-03:** Given a journey step is retried, when submitted twice, then only one logical message is created.
 - **AC-04:** Given an offer token is expired or already redeemed, when checkout validates it, then redemption is rejected.
+- **AC-05:** Given campaign eligibility is evaluated, when dormancy is calculated, then the configured category-specific inactivity threshold and qualifying-activity definition are applied.
+- **AC-06:** Given campaign reporting is generated, when outcomes are attributed, then delivery, click, redemption, and incremental outcomes are reported as separate measures.
+- **AC-07:** Given an audience rule uses a sensitive customer attribute, when approval is absent, then the attribute is not inferred or used for targeting.
 
 ## 13. Operational metrics
 
@@ -199,7 +203,12 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - Incremental revenue versus holdout or baseline
 - Campaign cost per incremental reactivated customer
 
-Define numerator, denominator, source system, measurement window, owner, and baseline before setting targets. Metrics are measurement proposals, not promised improvements.
+- **Reactivation rate:** eligible contacted dormant customers with a qualifying return activity ÷ eligible dormant customers contacted.
+- **Campaign conversion rate:** customers completing the defined conversion ÷ delivered campaign contacts.
+- **Opt-out rate:** new opt-outs attributed to campaign ÷ delivered campaign contacts.
+- Review per campaign and monthly; use a defined attribution window and suppression-aware denominator.
+
+Assign a named metric owner, reporting window, and baseline before setting a target. These are measurement definitions, not promised improvements.
 
 ## 14. Assumptions and open decisions
 
@@ -210,9 +219,15 @@ Define numerator, denominator, source system, measurement window, owner, and bas
 
 ## 15. Traceability
 
-| Rule group | Acceptance criteria | Implementation evidence |
+| Business rule | Acceptance criterion | Verification focus |
 |---|---|---|
-| BR-001 to BR-007 | AC-01 to AC-04 | Unit/integration tests, audit events, and process-owner sign-off |
+| BR-001 | AC-05 | the configured category-specific inactivity threshold and qualifying-activity definition are applied |
+| BR-002 | AC-01 | the customer is excluded |
+| BR-003 | AC-03 | only one logical message is created |
+| BR-004 | AC-04 | redemption is rejected |
+| BR-005 | AC-02 | the pending message is cancelled |
+| BR-006 | AC-06 | delivery, click, redemption, and incremental outcomes are reported as separate measures |
+| BR-007 | AC-07 | the attribute is not inferred or used for targeting |
 
 ---
 

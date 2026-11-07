@@ -35,13 +35,14 @@ Loyalty enrollment and reward balances become inconsistent when identity matchin
 
 ## 4. Trigger, preconditions, and postconditions
 
-**Trigger:** A valid business event or authorized user action initiates the workflow.
+**Trigger:** A prospective customer submits a registration/enrollment request or accepts an authorized invitation.
 
 **Preconditions**
-- Initiating actor or service is authenticated.
-- Required master data, policy versions, and reference records are available.
-- Requested object is in a state that permits the operation.
-- Required permissions and segregation-of-duty controls are configured.
+- Required identity and contact fields, consent text, and terms version are available.
+- Duplicate detection keys and manual-review rules are defined.
+- Signup, invitation, and tenant/account eligibility policies are configured.
+- Verification channels and expiry rules are available.
+- Default role and access scope follow least-privilege policy.
 
 **Postconditions**
 - Business object has an explicit final or pending status.
@@ -78,7 +79,7 @@ flowchart TD
 
 ## 6. System interaction view
 
-This logical sequence shows system responsibilities. Adapt participants and messages to the selected architecture and provider contract.
+The sequence models enrollment intake, consent capture, identity matching, member-profile creation/linking, points ledger initialization, and activation.
 
 ```mermaid
 sequenceDiagram
@@ -138,7 +139,7 @@ Use stable identifiers, explicit timestamps/time zones, currency and unit defini
 
 ## 9. State model
 
-The following is a lifecycle scaffold. Rename, add, or remove states to reflect the domain and define permitted transitions in the implementation specification.
+The state names and transitions below describe the proposed lifecycle for this workflow. Confirm guards, role permissions, timeout transitions, and terminal-state behavior with the process owner and implementation team before production use.
 
 ```mermaid
 stateDiagram-v2
@@ -188,6 +189,9 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - **AC-02:** Given the same purchase event is received twice, when points are calculated, then only one earning entry exists.
 - **AC-03:** Given an eligible purchase is refunded, when the refund event is processed, then a linked compensating points entry is posted.
 - **AC-04:** Given a tier rule changes, when a member is evaluated, then the applicable rule version and period are recorded.
+- **AC-05:** Given enrollment is submitted, when consent is missing or the terms version is not recorded, then enrollment does not become active.
+- **AC-06:** Given a benefit is redeemed, when member status, exclusions, or expiry make it ineligible, then redemption is rejected.
+- **AC-07:** Given a staff member requests a manual points-balance change, when authorized approval and reason are absent, then the change is blocked.
 
 ## 13. Operational metrics
 
@@ -197,7 +201,12 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - Tier upgrade/downgrade counts
 - Reward redemption and reversal rates
 
-Define numerator, denominator, source system, measurement window, owner, and baseline before setting targets. Metrics are measurement proposals, not promised improvements.
+- **Onboarding completion rate:** new accounts reaching ACTIVE ÷ eligible registration starts.
+- **Time to activation:** ACTIVE timestamp minus registration-start timestamp; report median and P90.
+- **Verification failure rate:** verification attempts rejected/expired ÷ verification attempts.
+- Review weekly by channel, signup cohort, and failure reason; exclude test accounts.
+
+Assign a named metric owner, reporting window, and baseline before setting a target. These are measurement definitions, not promised improvements.
 
 ## 14. Assumptions and open decisions
 
@@ -208,9 +217,15 @@ Define numerator, denominator, source system, measurement window, owner, and bas
 
 ## 15. Traceability
 
-| Rule group | Acceptance criteria | Implementation evidence |
+| Business rule | Acceptance criterion | Verification focus |
 |---|---|---|
-| BR-001 to BR-007 | AC-01 to AC-04 | Unit/integration tests, audit events, and process-owner sign-off |
+| BR-001 | AC-05 | enrollment does not become active |
+| BR-002 | AC-01 | duplicate account creation is prevented or routed to review |
+| BR-003 | AC-02 | only one earning entry exists |
+| BR-004 | AC-03 | a linked compensating points entry is posted |
+| BR-005 | AC-04 | the applicable rule version and period are recorded |
+| BR-006 | AC-06 | redemption is rejected |
+| BR-007 | AC-07 | the change is blocked |
 
 ---
 

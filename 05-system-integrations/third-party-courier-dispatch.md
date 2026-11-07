@@ -35,13 +35,14 @@ Courier assignment and tracking are external dependencies. Repeated booking requ
 
 ## 4. Trigger, preconditions, and postconditions
 
-**Trigger:** A valid business event or authorized user action initiates the workflow.
+**Trigger:** An order is packed and marked ready for shipment, and the merchant requests a courier booking.
 
 **Preconditions**
-- Initiating actor or service is authenticated.
-- Required master data, policy versions, and reference records are available.
-- Requested object is in a state that permits the operation.
-- Required permissions and segregation-of-duty controls are configured.
+- Order, package dimensions/weight, pickup address, delivery address, and recipient contact are validated.
+- Carrier serviceability, service level, quoted cost, and delivery constraints are available.
+- Merchant reference and booking idempotency key are generated before provider submission.
+- Pickup custody verification and proof-of-delivery requirements are defined.
+- Cancellation, redelivery, return-to-origin, and provider outage procedures are configured.
 
 **Postconditions**
 - Business object has an explicit final or pending status.
@@ -78,7 +79,7 @@ flowchart TD
 
 ## 6. System interaction view
 
-This logical sequence shows system responsibilities. Adapt participants and messages to the selected architecture and provider contract.
+The sequence models shipment readiness, carrier booking, idempotency lookup, driver assignment, verified pickup custody, tracking callbacks, delivery proof, and return/retry outcomes.
 
 ```mermaid
 sequenceDiagram
@@ -137,7 +138,7 @@ Use stable identifiers, explicit timestamps/time zones, currency and unit defini
 
 ## 9. State model
 
-The following is a lifecycle scaffold. Rename, add, or remove states to reflect the domain and define permitted transitions in the implementation specification.
+The state names and transitions below describe the proposed lifecycle for this workflow. Confirm guards, role permissions, timeout transitions, and terminal-state behavior with the process owner and implementation team before production use.
 
 ```mermaid
 stateDiagram-v2
@@ -189,6 +190,9 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - **AC-02:** Given driver identity does not match provider assignment, when pickup is attempted, then handover is blocked and an exception is recorded.
 - **AC-03:** Given a duplicate delivered callback arrives, when processed, then shipment is completed once and audit history is preserved.
 - **AC-04:** Given delivery fails, when failure callback is received, then shipment enters a recoverable exception state rather than DELIVERED.
+- **AC-05:** Given a shipment is booked, when customer contact/location details are sent to the carrier, then only fields necessary for fulfillment are shared.
+- **AC-06:** Given cancellation, redelivery, or return-to-origin is requested, when provider policy applies a fee or restriction, then the configured rule and evidence are recorded.
+- **AC-07:** Given high-risk goods are delivered, when courier completion is received, then customer acceptance is not assumed unless the approved policy permits it.
 
 ## 13. Operational metrics
 
@@ -198,7 +202,12 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - Duplicate booking prevention count
 - Courier invoice versus quoted cost variance
 
-Define numerator, denominator, source system, measurement window, owner, and baseline before setting targets. Metrics are measurement proposals, not promised improvements.
+- **Booking success rate:** provider-confirmed bookings ÷ valid booking requests.
+- **On-time delivery rate:** delivered shipments meeting promised delivery window ÷ delivered shipments.
+- **Failed delivery rate:** shipments with a failed delivery attempt ÷ shipments dispatched.
+- **Courier cost variance:** actual billed cost minus accepted quote, by carrier/service. Review weekly by lane and carrier.
+
+Assign a named metric owner, reporting window, and baseline before setting a target. These are measurement definitions, not promised improvements.
 
 ## 14. Assumptions and open decisions
 
@@ -209,9 +218,16 @@ Define numerator, denominator, source system, measurement window, owner, and bas
 
 ## 15. Traceability
 
-| Rule group | Acceptance criteria | Implementation evidence |
+| Business rule | Acceptance criterion | Verification focus |
 |---|---|---|
-| BR-001 to BR-008 | AC-01 to AC-04 | Unit/integration tests, audit events, and process-owner sign-off |
+| BR-001 | AC-01 | provider lookup occurs before a second booking is created |
+| BR-002 | AC-01 | provider lookup occurs before a second booking is created |
+| BR-003 | AC-02 | handover is blocked and an exception is recorded |
+| BR-004 | AC-03 | shipment is completed once and audit history is preserved |
+| BR-005 | AC-04 | shipment enters a recoverable exception state rather than DELIVERED |
+| BR-006 | AC-05 | only fields necessary for fulfillment are shared |
+| BR-007 | AC-06 | the configured rule and evidence are recorded |
+| BR-008 | AC-07 | customer acceptance is not assumed unless the approved policy permits it |
 
 ---
 

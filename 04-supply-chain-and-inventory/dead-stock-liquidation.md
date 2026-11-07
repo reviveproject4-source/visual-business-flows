@@ -35,13 +35,14 @@ Slow-moving goods tie up working capital and may become obsolete or expire. Arbi
 
 ## 4. Trigger, preconditions, and postconditions
 
-**Trigger:** A valid business event or authorized user action initiates the workflow.
+**Trigger:** A scheduled inventory review identifies stock meeting a configured aging, inactivity, expiry-risk, or turnover criterion.
 
 **Preconditions**
-- Initiating actor or service is authenticated.
-- Required master data, policy versions, and reference records are available.
-- Requested object is in a state that permits the operation.
-- Required permissions and segregation-of-duty controls are configured.
+- SKU, location, on-hand quantity, cost basis, last movement, expiry/batch, and reservation status are available.
+- Aging and dead-stock criteria are approved, versioned, and differentiated by product category where needed.
+- Stock valuation and markdown/liquidation authority are defined.
+- Quality, recall, expiry, and legal restrictions are checked before disposition.
+- Write-off, transfer, supplier return, discount, and disposal evidence requirements are specified.
 
 **Postconditions**
 - Business object has an explicit final or pending status.
@@ -77,7 +78,7 @@ flowchart TD
 
 ## 6. System interaction view
 
-This logical sequence shows system responsibilities. Adapt participants and messages to the selected architecture and provider contract.
+The sequence models aging analysis, physical quantity validation, disposition recommendation, markdown/write-off approval, channel price synchronization, and recovery-value reporting.
 
 ```mermaid
 sequenceDiagram
@@ -138,7 +139,7 @@ Use stable identifiers, explicit timestamps/time zones, currency and unit defini
 
 ## 9. State model
 
-The following is a lifecycle scaffold. Rename, add, or remove states to reflect the domain and define permitted transitions in the implementation specification.
+The state names and transitions below describe the proposed lifecycle for this workflow. Confirm guards, role permissions, timeout transitions, and terminal-state behavior with the process owner and implementation team before production use.
 
 ```mermaid
 stateDiagram-v2
@@ -186,6 +187,9 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - **AC-02:** Given a markdown breaches configured margin authority, when approval is requested, then it routes to a higher approver or is rejected.
 - **AC-03:** Given a lot is expired or recalled, when disposition is evaluated, then sale markdown is blocked.
 - **AC-04:** Given stock quantity changes during approval, when execution begins, then approved quantity is revalidated.
+- **AC-05:** Given stock is flagged for review, when the aging rule is applied, then the effective category-specific threshold and seasonality rule are recorded.
+- **AC-06:** Given supplier return or inter-location transfer is selected, when disposition is confirmed, then a receiving party and movement reference are required.
+- **AC-07:** Given a liquidation campaign is closed, when performance is reviewed, then recovery value and margin are compared with the approved baseline.
 
 ## 13. Operational metrics
 
@@ -195,7 +199,12 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - Markdown gross-margin impact
 - Write-off value and reason-code trend
 
-Define numerator, denominator, source system, measurement window, owner, and baseline before setting targets. Metrics are measurement proposals, not promised improvements.
+- **Aged inventory ratio:** inventory value beyond the approved aging threshold ÷ total inventory value.
+- **Recovery value rate:** net proceeds from liquidation/return ÷ carrying value of disposed stock.
+- **Disposition cycle time:** final disposition timestamp minus review-case creation timestamp.
+- **Write-off rate:** written-off inventory value ÷ average inventory value for the period. Review monthly by category and location.
+
+Assign a named metric owner, reporting window, and baseline before setting a target. These are measurement definitions, not promised improvements.
 
 ## 14. Assumptions and open decisions
 
@@ -206,9 +215,16 @@ Define numerator, denominator, source system, measurement window, owner, and bas
 
 ## 15. Traceability
 
-| Rule group | Acceptance criteria | Implementation evidence |
+| Business rule | Acceptance criterion | Verification focus |
 |---|---|---|
-| BR-001 to BR-008 | AC-01 to AC-04 | Unit/integration tests, audit events, and process-owner sign-off |
+| BR-001 | AC-05 | the effective category-specific threshold and seasonality rule are recorded |
+| BR-002 | AC-01 | physical quantity validation and finance approval are required |
+| BR-003 | AC-02 | it routes to a higher approver or is rejected |
+| BR-004 | AC-04 | approved quantity is revalidated |
+| BR-005 | AC-03 | sale markdown is blocked |
+| BR-006 | AC-01 | physical quantity validation and finance approval are required |
+| BR-007 | AC-06 | a receiving party and movement reference are required |
+| BR-008 | AC-07 | recovery value and margin are compared with the approved baseline |
 
 ---
 

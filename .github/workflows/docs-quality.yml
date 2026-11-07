@@ -8,15 +8,25 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: docs-quality-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   markdown:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 22
       - name: Check Markdown formatting
         run: npx --yes markdownlint-cli2 "**/*.md" "#node_modules"
+      - name: Validate repository-local Markdown links
+        run: python scripts/check_internal_links.py
+      - name: Validate Mermaid syntax in Markdown
+        uses: sgerrand/mermaid-validation-action@31f8eed257dbbbadad3332c83694866903e92b0e
+        with:
+          comment-on-pr: false

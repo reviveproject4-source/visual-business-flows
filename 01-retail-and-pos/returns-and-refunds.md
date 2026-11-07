@@ -35,13 +35,14 @@ Returns affect customer experience, inventory valuation, and cash. Weak controls
 
 ## 4. Trigger, preconditions, and postconditions
 
-**Trigger:** A valid business event or authorized user action initiates the workflow.
+**Trigger:** A customer or authorized service agent submits a return, exchange, or refund request against an identifiable order item.
 
 **Preconditions**
-- Initiating actor or service is authenticated.
-- Required master data, policy versions, and reference records are available.
-- Requested object is in a state that permits the operation.
-- Required permissions and segregation-of-duty controls are configured.
+- The original order, payment, and item-level fulfillment record can be retrieved.
+- The return window, eligible item conditions, exclusions, and refund method are configured as policy inputs.
+- The requester and receiving location/agent are identified.
+- Refund authority limits and inspection/disposition roles are defined.
+- Payment-provider reversal or refund references can be recorded.
 
 **Postconditions**
 - Business object has an explicit final or pending status.
@@ -78,7 +79,7 @@ flowchart TD
 
 ## 6. System interaction view
 
-This logical sequence shows system responsibilities. Adapt participants and messages to the selected architecture and provider contract.
+The sequence models return eligibility, item inspection, inventory disposition, refund authorization, payment-provider response, and idempotent refund recovery.
 
 ```mermaid
 sequenceDiagram
@@ -142,7 +143,7 @@ Use stable identifiers, explicit timestamps/time zones, currency and unit defini
 
 ## 9. State model
 
-The following is a lifecycle scaffold. Rename, add, or remove states to reflect the domain and define permitted transitions in the implementation specification.
+The state names and transitions below describe the proposed lifecycle for this workflow. Confirm guards, role permissions, timeout transitions, and terminal-state behavior with the process owner and implementation team before production use.
 
 ```mermaid
 stateDiagram-v2
@@ -191,6 +192,7 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - **AC-02:** Given an item is classified defective, when disposition is confirmed, then it is moved to quarantine and excluded from saleable availability.
 - **AC-03:** Given a refund request times out, when retried, then provider status is checked and duplicate refund is prevented.
 - **AC-04:** Given a return exceeds refundable quantity, when submitted, then validation rejects the excess.
+- **AC-05:** Given a manual return override is requested, when the requester lacks the required role or evidence, then the override is blocked and audited.
 
 ## 13. Operational metrics
 
@@ -200,7 +202,12 @@ Every retryable action should define idempotency, retry limits, backoff, timeout
 - Percentage of returned items correctly dispositioned
 - Repeat return patterns requiring policy review
 
-Define numerator, denominator, source system, measurement window, owner, and baseline before setting targets. Metrics are measurement proposals, not promised improvements.
+- **Return rate:** returned units ÷ sold units for the same cohort and period; source: sales and return lines.
+- **Refund cycle time:** refund-confirmed timestamp minus approved-refund timestamp; report median and P90.
+- **Inspection disposition mix:** units by restock, repair, quarantine, supplier claim, or write-off ÷ inspected units.
+- Review weekly; segment by SKU, reason code, channel, and location.
+
+Assign a named metric owner, reporting window, and baseline before setting a target. These are measurement definitions, not promised improvements.
 
 ## 14. Assumptions and open decisions
 
@@ -211,9 +218,15 @@ Define numerator, denominator, source system, measurement window, owner, and bas
 
 ## 15. Traceability
 
-| Rule group | Acceptance criteria | Implementation evidence |
+| Business rule | Acceptance criterion | Verification focus |
 |---|---|---|
-| BR-001 to BR-007 | AC-01 to AC-04 | Unit/integration tests, audit events, and process-owner sign-off |
+| BR-001 | AC-01 | automatic refund is blocked and a review case is created |
+| BR-002 | AC-04 | validation rejects the excess |
+| BR-003 | AC-02 | it is moved to quarantine and excluded from saleable availability |
+| BR-004 | AC-02 | it is moved to quarantine and excluded from saleable availability |
+| BR-005 | AC-04 | validation rejects the excess |
+| BR-006 | AC-03 | provider status is checked and duplicate refund is prevented |
+| BR-007 | AC-05 | the override is blocked and audited |
 
 ---
 
